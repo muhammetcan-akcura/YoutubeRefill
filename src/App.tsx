@@ -1,5 +1,5 @@
 import React from 'react';
-import YoutubeViewerCheck from './components/YoutubeViewerCheck';
+import YoutubeViewerCheck from './YoutubeStatsChecker';
 
 function App() {
   return (
