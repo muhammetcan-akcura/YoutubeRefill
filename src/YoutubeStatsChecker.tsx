@@ -17,7 +17,7 @@ const YoutubeStatsChecker: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('views');
-  const [adminApiKey, setAdminApiKey] = useState('bp7k6x22ood2j6x4kiba8ljnmlc3foolm6p8oxat77bybefryzobsgb57mjbn63h');
+  const [adminApiKey, setAdminApiKey] = useState('');
 
   const addLog = (message: string) => {
     setLogs(prev => [...prev, message]);
