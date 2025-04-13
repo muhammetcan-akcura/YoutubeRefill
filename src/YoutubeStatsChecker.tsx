@@ -47,7 +47,7 @@ const YoutubeStatsChecker: React.FC = () => {
         throw new Error('Geçerli ID bulunamadı');
       }
     
-    const response = await axios.post('http://localhost:5000/api/orders', {
+    const response = await axios.post('https://youtuberefill-1.onrender.com/api/orders', {
       ids: formattedIds,
       apikey:adminApiKey
     });
