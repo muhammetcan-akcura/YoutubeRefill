@@ -10,7 +10,7 @@ import ResultsPanel from './components/resultsPanel';
 import InfoPanel from './components/infoPanel';
 
 const YoutubeStatsChecker: React.FC = () => {
-  const [apiKey, setApiKey] = useState('');
+  const [apiKey, setApiKey] = useState('AIzaSyDV0NEOodg0b55bp-HctMYuDWmIFq318K8');
   const [orderIds, setOrderIds] = useState('');
   const [logs, setLogs] = useState<string[]>([]);
   const [refillContent, setRefillContent] = useState('');
@@ -284,6 +284,16 @@ const YoutubeStatsChecker: React.FC = () => {
       id: '4', 
       value: 'AIzaSyBtBIXjPHa3UnZ1mS5igeycAHbrOfZaaDA', 
       label: '(4) API Anahtarı' 
+    },
+    {
+      id: '5', 
+      value: 'AIzaSyC86HtI48jCMFSOw3ib7XjmgvaYibaHYUk', 
+      label: '(5) API Anahtarı' 
+    },
+    {
+      id: '6', 
+      value: ' AIzaSyBjBAdDGbN7ttYxC-sdnqV2q1rkUEwdQfc', 
+      label: '(6) API Anahtarı' 
     },
   ];
 
