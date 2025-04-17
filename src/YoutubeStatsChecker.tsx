@@ -192,7 +192,7 @@ const YoutubeStatsChecker: React.FC = () => {
       if (refillNeeded.length > 0) {
         if (activeTab === 'embed') {
           // Embed için hata sebepleriyle birlikte liste oluştur
-          const errorDetails = refillNeeded.map(item => {
+         refillNeeded.map(item => {
             // Hata sebeplerini error field'ından alıp daha kullanıcı dostu hale getir
             let errorReason = '';
             if (item.errorReason === 'not_found') {
@@ -211,7 +211,7 @@ const YoutubeStatsChecker: React.FC = () => {
           }).join('\n');
           
           // ID listesi
-          const idList = refillNeeded.map(item => item.id).join(',');
+          
           
           // Tarihli detaylı liste
           const currentDate = new Date();
@@ -226,26 +226,14 @@ const YoutubeStatsChecker: React.FC = () => {
           setRefillContent(finalContent);
           addLog(`\nErişilemeyen ${refillNeeded.length} video tespit edildi ve rapor hazırlandı.`);
         } else {
-          // Diğer sekmeler için normal refill formatı
-          const countLabel = activeTab === 'views' ? 'views' : 
-                          activeTab === 'likes' ? 'likes' : 'subs';
+
+        
           
           const refillLines = refillNeeded
             .map(item => `${item.id} refill(${item.currentCount})`)
             .join('\n');
           
           const idList = refillNeeded.map(item => item.mainID).join(',');
-          
-          const currentDate = new Date();
-          const day = String(currentDate.getDate()).padStart(2, '0');
-          const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-          const year = currentDate.getFullYear();
-          const formattedDate = `${day}.${month}.${year}`;
-          
-          const idCountDate = refillNeeded
-            .map(item => `${item.id} ${item.count} ${formattedDate}`)
-            .join('\n');
-          
           const finalContent = `${refillLines}\n\n${idList}\n`;
           setRefillContent(finalContent);
           
