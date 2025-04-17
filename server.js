@@ -2,8 +2,9 @@
 import express from 'express'
 import axios from 'axios'
 import cors from 'cors'
-
+import dotenv from 'dotenv';
 const app = express();
+dotenv.config();
 app.use(cors());
 app.use(express.json());
 
@@ -15,7 +16,7 @@ app.post('/api/orders', async (req, res) => {
     const response = await axios.get('https://smmexclusive.com/adminapi/v2/orders', {
       headers: {
         'Content-Type': 'application/json',
-        'X-Api-Key': apikey,
+        'X-Api-Key': process.env.KEY,
       },
       params: {
         limit: 0,
