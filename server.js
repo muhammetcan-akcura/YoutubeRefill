@@ -30,8 +30,8 @@ app.post('/api/orders', async (req, res) => {
     res.status(500).json({ error: 'Veri alınırken bir hata oluştu' });
   }
 });
-//"https://youtuberefill-1.onrender.com" ||
-const PORT =  5000;
+
+const PORT = "https://youtuberefill-1.onrender.com" || 5000 ;
 app.listen(PORT, () => {
   console.log(`Sunucu ${PORT} portunda çalışıyor`);
 });
