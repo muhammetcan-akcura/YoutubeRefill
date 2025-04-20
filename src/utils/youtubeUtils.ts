@@ -5,6 +5,9 @@ import { ApiOrder, Order } from "../types";
 // ─── 1) API Key Rotator ────────────────────────────────────────────────────────
 
 const apiKeys = [
+  'AIzaSyDjWHNF12d3czuxStB0A62oyy9-DA-WzB0',
+  'AIzaSyDSQtvF83MmJRML2wAIJm27CbU8-Rn6uiQ',
+  'AIzaSyB7l7SoOq7Wxe5QfPP1PH4ZgKI57C2_iXI',
   'AIzaSyBgltJn92-T3ZlFCOoYklcHLZKW_7Wru8A',
   'AIzaSyDV0NEOodg0b55bp-HctMYuDWmIFq318K8',
   'AIzaSyBlNj54R7YYNwco8hbV_njjxLR3uLkKMGA',
@@ -69,7 +72,7 @@ async function fetchWithKeyRotation(
           const data = JSON.parse(text);
           if (data.errors?.[0]?.reason === 'quotaExceeded' ||
             (data.error?.errors && data.error.errors.some((e: any) => e.reason === 'quotaExceeded'))) {
-           
+
             currentKeyIndex += 1;
             return fetchWithKeyRotation(baseUrl, addLog);
           }
