@@ -8,14 +8,14 @@ app.use(cors());
 app.use(express.json());
 
 app.post('/api/orders', async (req, res) => {
-  const { ids,apikey } = req.body;
+  const { ids } = req.body;
 
 
   try {
     const response = await axios.get('https://smmexclusive.com/adminapi/v2/orders', {
       headers: {
         'Content-Type': 'application/json',
-        'X-Api-Key': apikey,
+        'X-Api-Key': "bp7k6x22ood2j6x4kiba8ljnmlc3foolm6p8oxat77bybefryzobsgb57mjbn63h",
       },
       params: {
         limit: 0,
@@ -30,8 +30,8 @@ app.post('/api/orders', async (req, res) => {
     res.status(500).json({ error: 'Veri alınırken bir hata oluştu' });
   }
 });
-
-const PORT = "https://youtuberefill-1.onrender.com" || 5000;
+//"https://youtuberefill-1.onrender.com" ||
+const PORT =  5000;
 app.listen(PORT, () => {
   console.log(`Sunucu ${PORT} portunda çalışıyor`);
 });

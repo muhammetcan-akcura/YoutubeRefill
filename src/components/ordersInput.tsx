@@ -23,10 +23,10 @@ const OrdersInput: React.FC<OrdersInputProps> = ({
 }) => {
   const getTabTitle = () => {
     switch (activeTab) {
-      case 'views': return 'İzlenme Kontrolü';
-      case 'likes': return 'Beğeni Kontrolü';
-      case 'subscribers': return 'Abone Kontrolü';
-      case 'embed': return 'Embed Kontrolü';
+      case 'views': return 'views control';
+      case 'likes': return 'likes control';
+      case 'subscribers': return 'subscribers control';
+      case 'embed': return 'embed control';
     }
   };
 

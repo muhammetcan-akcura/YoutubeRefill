@@ -1,4 +1,3 @@
-import React from 'react';
 import YoutubeViewerCheck from './YoutubeStatsChecker';
 
 function App() {

@@ -12,7 +12,7 @@ const InfoPanel: React.FC = () => {
         <div className="bg-gray-900 p-4 rounded-lg">
           <div className="flex items-center mb-2">
             <Youtube className="w-5 h-5 text-red-500 mr-2" />
-            <h3 className="font-semibold text-white">İzlenme Kontrolü</h3>
+            <h3 className="font-semibold text-white">views control</h3>
           </div>
           <p className="text-gray-300 text-sm">
             Video URL'sini kullanarak izlenme sayısını kontrol eder ve eksik izlenmeleri tespit eder.
@@ -21,7 +21,7 @@ const InfoPanel: React.FC = () => {
         <div className="bg-gray-900 p-4 rounded-lg">
           <div className="flex items-center mb-2">
             <ThumbsUp className="w-5 h-5 text-blue-500 mr-2" />
-            <h3 className="font-semibold text-white">Beğeni Kontrolü</h3>
+            <h3 className="font-semibold text-white">likes control</h3>
           </div>
           <p className="text-gray-300 text-sm">
             Video URL'sini kullanarak beğeni sayısını kontrol eder ve eksik beğenileri tespit eder.
@@ -30,7 +30,7 @@ const InfoPanel: React.FC = () => {
         <div className="bg-gray-900 p-4 rounded-lg">
           <div className="flex items-center mb-2">
             <UserCheck className="w-5 h-5 text-green-500 mr-2" />
-            <h3 className="font-semibold text-white">Abone Kontrolü</h3>
+            <h3 className="font-semibold text-white">Abone control</h3>
           </div>
           <p className="text-gray-300 text-sm">
             Kanal URL'sini kullanarak abone sayısını kontrol eder ve eksik aboneleri tespit eder.
@@ -39,7 +39,7 @@ const InfoPanel: React.FC = () => {
         <div className="bg-gray-900 p-4 rounded-lg">
   <div className="flex items-center mb-2">
     <Eye className="w-5 h-5 text-purple-500 mr-2" />
-    <h3 className="font-semibold text-white">Embed Kontrolü</h3>
+    <h3 className="font-semibold text-white">Embed control</h3>
   </div>
   <p className="text-gray-300 text-sm">
     Video URL'sini kullanarak videonun erişilebilir olup olmadığını kontrol eder (açık, kapalı, kaldırılmış).

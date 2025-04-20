@@ -11,50 +11,46 @@ interface TabSelectorProps {
 const TabSelector: React.FC<TabSelectorProps> = ({ activeTab, setActiveTab }) => {
   return (
     <div className="bg-gray-800 rounded-xl shadow-lg p-4 mb-6 border border-gray-700">
-      <div className="flex justify-center gap-2">
+      <div className="flex flex-wrap justify-center gap-2">
         <button
           onClick={() => setActiveTab('views')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${
-            activeTab === 'views'
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base ${activeTab === 'views'
               ? 'bg-blue-600 text-white'
               : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-          }`}
+            }`}
         >
           <Youtube className="w-5 h-5" />
-          İzlenmeler
+          Views
         </button>
         <button
           onClick={() => setActiveTab('likes')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${
-            activeTab === 'likes'
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base ${activeTab === 'likes'
               ? 'bg-blue-600 text-white'
               : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-          }`}
+            }`}
         >
           <ThumbsUp className="w-5 h-5" />
-          Beğeniler
+          Likes
         </button>
         <button
           onClick={() => setActiveTab('subscribers')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${
-            activeTab === 'subscribers'
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base ${activeTab === 'subscribers'
               ? 'bg-blue-600 text-white'
               : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-          }`}
+            }`}
         >
           <UserCheck className="w-5 h-5" />
-          Aboneler
+          Subscribers
         </button>
         <button
           onClick={() => setActiveTab('embed')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${
-            activeTab === 'embed'
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base ${activeTab === 'embed'
               ? 'bg-blue-600 text-white'
               : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-          }`}
+            }`}
         >
           <Eye className="w-5 h-5" />
-          Embed Kontrolü
+          Embed Control
         </button>
       </div>
     </div>
