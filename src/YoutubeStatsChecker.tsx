@@ -6,6 +6,7 @@ import { getViewsCount, getLikesCount, getSubscriberCount, checkVideoAccessibili
 import Header from './components/header';
 import TabSelector from './components/tabSelector';
 import ResultsPanel from './components/resultsPanel';
+import { start } from 'repl';
 
 const YoutubeStatsChecker: React.FC = () => {
   const [orderIds, setOrderIds] = useState('');
@@ -37,42 +38,42 @@ const YoutubeStatsChecker: React.FC = () => {
   const fetchOrdersFromApi = async (ids: string) => {
     try {
       addLog(`🔍 Fetching order data from API...`);
-  
+
       const formattedIdsArray = ids
         .trim()
         .split(',')
         .map(id => id.trim())
         .filter(id => id !== '');
-  
+
       if (formattedIdsArray.length === 0) {
         throw new Error('No valid IDs found');
       }
-  
+
       const chunkSize = 100;
       const chunks: string[][] = [];
-  
+
       // ID'leri 100'erli gruplara ayır
       for (let i = 0; i < formattedIdsArray.length; i += chunkSize) {
         chunks.push(formattedIdsArray.slice(i, i + chunkSize));
       }
-  
+
       const allResults: any[] = [];
-  
+
       // Her bir grubu sırayla API'ye gönder
       for (let i = 0; i < chunks.length; i++) {
         addLog(`📦 Sending chunk ${i + 1}/${chunks.length} to API...`);
-  
-        const response = await axios.post('http://https://youtuberefill-1.onrender.com/api/orders', {
+
+        const response = await axios.post('https://youtuberefill-1.onrender.com/api/orders', {
           ids: chunks[i].join(','),
         });
-  
+
         if (!response.data || !Array.isArray(response?.data?.data?.list)) {
           throw new Error(`API returned invalid data for chunk ${i + 1}`);
         }
-  
+
         allResults.push(...response.data.data.list);
       }
-  
+
       return {
         data: {
           list: allResults,
@@ -87,7 +88,7 @@ const YoutubeStatsChecker: React.FC = () => {
       throw error;
     }
   };
-  
+
 
   const checkOrders = async () => {
 
@@ -121,7 +122,9 @@ const YoutubeStatsChecker: React.FC = () => {
         count: apiOrder.quantity,
         link: apiOrder.link_url || apiOrder.link,
         mainLink: apiOrder.link
+
       }));
+      console.log(orders[0].startCount)
 
       if (orders.length === 0) {
         addLog('No valid orders found.');
@@ -170,7 +173,8 @@ const YoutubeStatsChecker: React.FC = () => {
                   currentCount: 0,
                   errorReason: accessResult.error,
                   link: order.link,
-                  mainLink: order.mainLink
+                  mainLink: order.mainLink,
+                  startCount: order.startCount
                 });
               }
               continue; // Skip other operations
@@ -195,6 +199,7 @@ const YoutubeStatsChecker: React.FC = () => {
               id: order.id,
               mainID: order.mainID,
               count: order.count,
+              startCount: order.startCount,
               currentCount
             });
           }
@@ -242,7 +247,7 @@ const YoutubeStatsChecker: React.FC = () => {
 
 
           const refillLines = refillNeeded
-            .map(item => `${item.id} refill(${item.currentCount})`)
+            .map(item => `${item.id} refill(${item.currentCount}) | missing amount: ${Number(item.startCount)+Number(item.count) - Number(item.currentCount)} | %${((100 / Number(item.count)) * (Number(item.startCount)+Number(item.count) - Number(item.currentCount))).toFixed(0)  }`)
             .join('\n');
 
           const idList = refillNeeded.map(item => item.mainID).join(',');
@@ -348,8 +353,8 @@ const OrdersIdInput: React.FC<OrdersIdInputProps> = ({
         onClick={checkOrders}
         disabled={isLoading}
         className={`w-full px-6 py-3 rounded-lg text-white font-medium flex items-center justify-center gap-2 ${isLoading
-            ? 'bg-blue-500/50 cursor-not-allowed'
-            : 'bg-blue-500 hover:bg-blue-600 transition-colors'
+          ? 'bg-blue-500/50 cursor-not-allowed'
+          : 'bg-blue-500 hover:bg-blue-600 transition-colors'
           }`}
       >
         {isLoading ? (

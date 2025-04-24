@@ -2,11 +2,12 @@
 import express from 'express'
 import axios from 'axios'
 import cors from 'cors'
-
+import dotenv from 'dotenv';
+dotenv.config();
 const app = express();
 app.use(cors());
 app.use(express.json());
-
+const apikey = process.env.apikey;
 app.post('/api/orders', async (req, res) => {
   const { ids } = req.body;
 
@@ -15,7 +16,7 @@ app.post('/api/orders', async (req, res) => {
     const response = await axios.get('https://smmexclusive.com/adminapi/v2/orders', {
       headers: {
         'Content-Type': 'application/json',
-        'X-Api-Key': "bp7k6x22ood2j6x4kiba8ljnmlc3foolm6p8oxat77bybefryzobsgb57mjbn63h",
+        'X-Api-Key': apikey
       },
       params: {
         limit: 0,
@@ -31,7 +32,7 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
-const PORT = "https://youtuberefill-1.onrender.com" || 5000 ;
+const PORT =  process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Sunucu ${PORT} portunda çalışıyor`);
 });

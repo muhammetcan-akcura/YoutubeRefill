@@ -30,4 +30,5 @@ export interface RefillItem {
   errorReason?: string;
   link?: string;
   mainLink?: string;
+  startCount?: string | number;
 }
