@@ -6,7 +6,7 @@ import { getViewsCount, getLikesCount, getSubscriberCount, checkVideoAccessibili
 import Header from './components/header';
 import TabSelector from './components/tabSelector';
 import ResultsPanel from './components/resultsPanel';
-import { start } from 'repl';
+
 
 const YoutubeStatsChecker: React.FC = () => {
   const [orderIds, setOrderIds] = useState('');
@@ -63,7 +63,7 @@ const YoutubeStatsChecker: React.FC = () => {
       for (let i = 0; i < chunks.length; i++) {
         addLog(`📦 Sending chunk ${i + 1}/${chunks.length} to API...`);
 
-        const response = await axios.post('https://youtuberefill-1.onrender.com/api/orders', {
+        const response = await axios.post('http://localhost:5000/api/orders', {
           ids: chunks[i].join(','),
         });
 
@@ -71,8 +71,20 @@ const YoutubeStatsChecker: React.FC = () => {
           throw new Error(`API returned invalid data for chunk ${i + 1}`);
         }
 
-        allResults.push(...response.data.data.list);
+        // Her chunk için gelen sonuçları doğru sırada ekle
+        let chunkResults = response.data.data.list;
+
+        // Gelen diziyi ters çevir
+        chunkResults = chunkResults.reverse();
+
+        // Sonuçları 'chunkResults' dizisinden sırasıyla 'allResults' dizisine ekle
+        for (let j = 0; j < chunkResults.length; j++) {
+          const resultIndex = i * chunkSize + j;  // Her chunk'ın sonucu için doğru index hesapla
+          allResults[resultIndex] = chunkResults[j];  // Sıralama korunarak ekle
+        }
       }
+
+
 
       return {
         data: {
@@ -247,7 +259,13 @@ const YoutubeStatsChecker: React.FC = () => {
 
 
           const refillLines = refillNeeded
-            .map(item => `${item.id} refill(${item.currentCount}) | missing amount: ${Number(item.startCount)+Number(item.count) - Number(item.currentCount)} | %${((100 / Number(item.count)) * (Number(item.startCount)+Number(item.count) - Number(item.currentCount))).toFixed(0)  }`)
+            //  .map(item => `${item.id} refill(${item.currentCount}) | missing amount: ${Number(item.startCount)+Number(item.count) - Number(item.currentCount)} | %${((100 / Number(item.count)) * (Number(item.startCount)+Number(item.count) - Number(item.currentCount))).toFixed(0)  }`)
+            .map(item => {
+              if (Number(item.currentCount) < Number(item.startCount)) {
+                return `${item.mainID}: bellow start count ${item.currentCount} - ${item.startCount}`;
+              }
+              return `${item.mainID}: no problema`;
+            })
             .join('\n');
 
           const idList = refillNeeded.map(item => item.mainID).join(',');
