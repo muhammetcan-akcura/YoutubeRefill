@@ -263,7 +263,7 @@ const YoutubeStatsChecker: React.FC = () => {
               if (Number(item.currentCount) < Number(item.startCount)) {
                 return `${item.mainID}: bellow start count ${item.currentCount} - ${item.startCount}`;
               }
-              return `${item.id}(${item.currentCount}) | misssing amount: ${((Number(item.count) + Number(item.startCount))-Number(item.currentCount))} | %${(Number(item.count) + Number(item.startCount) - Number(item.currentCount))} | %${(((Number(item.count) + Number(item.startCount) - Number(item.currentCount)) / Number(item.count)) * 100).toFixed(0)}`;
+              return `${item.id}(${item.currentCount}) | misssing amount: ${((Number(item.count) + Number(item.startCount))-Number(item.currentCount))} | %${(((Number(item.count) + Number(item.startCount) - Number(item.currentCount)) / Number(item.count)) * 100).toFixed(0)}`;
             })
             .join('\n');
 
