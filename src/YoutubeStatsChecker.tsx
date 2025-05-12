@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { TabType, Order, RefillItem } from './types';
 import { getViewsCount, getLikesCount, getSubscriberCount, checkVideoAccessibility } from './utils/youtubeUtils';
-
 import Header from './components/header';
 import TabSelector from './components/tabSelector';
 import ResultsPanel from './components/resultsPanel';
@@ -63,7 +62,7 @@ const YoutubeStatsChecker: React.FC = () => {
       for (let i = 0; i < chunks.length; i++) {
         addLog(`📦 Sending chunk ${i + 1}/${chunks.length} to API...`);
 
-        const response = await axios.post('http://localhost:5000/api/orders', {
+        const response = await axios.post(`https://youtuberefill-1.onrender.com/api/orders`, {
           ids: chunks[i].join(','),
         });
 
@@ -264,7 +263,7 @@ const YoutubeStatsChecker: React.FC = () => {
               if (Number(item.currentCount) < Number(item.startCount)) {
                 return `${item.mainID}: bellow start count ${item.currentCount} - ${item.startCount}`;
               }
-              return `${item.mainID}: no problema`;
+              return `${item.id}(${item.currentCount}) | misssing amount: ${((Number(item.count) + Number(item.startCount))-Number(item.currentCount))} | %${(Number(item.count) + Number(item.startCount) - Number(item.currentCount))} | %${(((Number(item.count) + Number(item.startCount) - Number(item.currentCount)) / Number(item.count)) * 100).toFixed(0)}`;
             })
             .join('\n');
 
