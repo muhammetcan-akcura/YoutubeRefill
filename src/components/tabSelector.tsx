@@ -52,6 +52,7 @@ const TabSelector: React.FC<TabSelectorProps> = ({ activeTab, setActiveTab }) =>
           <Eye className="w-5 h-5" />
           Embed Control
         </button>
+        
       </div>
     </div>
   );

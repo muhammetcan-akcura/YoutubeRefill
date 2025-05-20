@@ -256,16 +256,28 @@ const YoutubeStatsChecker: React.FC = () => {
         } else {
 
 
-
+const missingOver90 :any= [];
           const refillLines = refillNeeded
             //  .map(item => `${item.id} refill(${item.currentCount}) | missing amount: ${Number(item.startCount)+Number(item.count) - Number(item.currentCount)} | %${((100 / Number(item.count)) * (Number(item.startCount)+Number(item.count) - Number(item.currentCount))).toFixed(0)  }`)
             .map(item => {
-              if (Number(item.currentCount) < Number(item.startCount)) {
-                return `${item.mainID}: bellow start count ${item.currentCount} - ${item.startCount}`;
-              }
-              return `${item.id}(${item.currentCount}) | misssing amount: ${((Number(item.count) + Number(item.startCount))-Number(item.currentCount))} | %${(((Number(item.count) + Number(item.startCount) - Number(item.currentCount)) / Number(item.count)) * 100).toFixed(0)}`;
-            })
-            .join('\n');
+  const totalNeeded = Number(item.count) + Number(item.startCount);
+  const current = Number(item.currentCount);
+  const missingAmount = totalNeeded - current;
+  const missingPercent = (missingAmount / Number(item.count)) * 100;
+
+  if (current < Number(item.startCount)) {
+    return `${item.mainID}: bellow start count ${item.currentCount} - ${item.startCount}`;
+  }
+
+  if (missingPercent >= 80) {
+    missingOver90.push(item.mainID); 
+  }
+
+  return `${item.id}(${current}) | misssing amount: ${missingAmount} | %${missingPercent.toFixed(0)}`;
+}).join('\n');
+
+
+console.log('IDs with over 90% missing:', missingOver90.join(","));
 
           const idList = refillNeeded.map(item => item.mainID).join(',');
           const finalContent = `${refillLines}\n\n${idList}\n`;

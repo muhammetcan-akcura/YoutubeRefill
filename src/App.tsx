@@ -1,10 +1,27 @@
+import Sidebar from './components/sidebar/sidebar';
+import Ticket from './ticket';
 import YoutubeViewerCheck from './YoutubeStatsChecker';
 
+
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 function App() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
-      <YoutubeViewerCheck />
-    </div>
+    
+  
+     <Router>
+      {/* Full height screen, flex row */}
+      <div className="min-h-screen flex bg-gradient-to-br from-gray-900 to-gray-800">
+        <Sidebar /> {/* Sol kısım */}
+        <main className="flex-1 p-6 text-white overflow-y-auto">
+          <Routes>
+            <Route path="/" element={<YoutubeViewerCheck />} />
+            <Route path="/ticket" element={<Ticket />} />
+          </Routes>
+        </main>
+      </div>
+    </Router>
+    
+   
   );
 }
 

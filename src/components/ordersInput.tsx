@@ -143,7 +143,7 @@ const getInputPlaceholder = () => {
           activeTab === 'views' ? 'İzlenmeleri Kontrol Et' :
           activeTab === 'likes' ? 'Beğenileri Kontrol Et' :
           activeTab === 'subscribers' ? 'Aboneleri Kontrol Et' :
-          'Embed Kontrol Et'
+          'Embed Checked'
         }
       </button>
     </div>
