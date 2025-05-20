@@ -43,15 +43,15 @@ export default function TicketDashboard() {
   const getCardColor = (type:any) => {
     switch (type) {
       case "refill":
-        return "bg-[#d0f0e4] text-[#1a1a2e]"
+        return "bg-[#2563eb] text-[#fffff]"
       case "refund":
-        return "bg-[#ffd6d6] text-[#1a1a2e]"
+        return "bg-[#2563eb] text-[#fffff]"
       case "speed_up":
-        return "bg-[#fff2c5] text-[#1a1a2e]"
+        return "bg-[#2563eb] text-[#fffff]"
       case "delayed_refund":
-        return "bg-[#ffe8d6] text-[#1a1a2e]"
+        return "bg-[#2563eb] text-[#fffff]"
       default:
-        return "bg-gray-200 text-[#1a1a2e]"
+        return "bg-gray-200 text-[#fffff]"
     }
   }
 
@@ -64,21 +64,28 @@ export default function TicketDashboard() {
           <h2 className="font-bold text-lg">{title}</h2>
           <span className="bg-white/20 text-sm px-2 py-1 rounded-full">{items.length}</span>
         </div>
-        <div className="p-4 flex-grow">
-          <div className={`max-h-[200px] overflow-y-auto mb-4 rounded-md ${colorClass} bg-opacity-10`}>
-            {items.length > 0 ? (
-              <div className="p-2 space-y-1">
-                {items.map((id:any, idx:any) => (
-                  <div key={idx} className={`${colorClass} p-2 rounded text-sm`}>
-                    {id}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-400 italic p-4 text-center">No data found</p>
-            )}
-          </div>
-        </div>
+       <div className="p-4 flex-grow">
+ <div className="p-2 flex flex-wrap gap-0.5 max-w-[300px] max-h-[300px] overflow-y-auto leading-tight">
+  {items.length > 0 ? (
+    items.map((item:any, idx:any) => (
+      <span
+        key={idx}
+        className="inline-block whitespace-nowrap"
+        style={{ wordBreak: 'normal' }}
+      >
+        {item}
+        {idx < items.length - 1 && <span>,</span>}
+      </span>
+    ))
+  ) : (
+    <p className="text-gray-400 italic p-4 text-center">No data found</p>
+  )}
+</div>
+
+
+
+</div>
+
         <div className="p-4 border-t border-[#2a2c3c]">
           <button
             onClick={() => handleCopy(items)}
@@ -190,7 +197,8 @@ export default function TicketDashboard() {
                     : "border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-500"
                 }`}
             >
-              Other Messages
+               Other Messages {" "}
+           { data.others.length > 0 ? <span className="bg-red-600 text-white py-2 px-4 text-center rounded-full">{ data.others.length }</span>:""}  
             </button>
           </nav>
         </div>
@@ -202,7 +210,7 @@ export default function TicketDashboard() {
           {renderTicketCard("Refill", data.refill, "refill")}
           {renderTicketCard("Refund", data.refund, "refund")}
           {renderTicketCard("Speed Up", data.speed_up, "speed_up")}
-          {renderTicketCard("Delayed Refund", data.delayed_refund, "delayed_refund")}
+          {renderTicketCard("No Yet Refund", data.delayed_refund, "delayed_refund")}
         </div>
       )}
 
@@ -213,17 +221,24 @@ export default function TicketDashboard() {
             <p className="text-sm text-gray-300">Messages that don't fit into standard categories</p>
           </div>
           <div className="p-4">
-            <div className="max-h-[400px] overflow-y-auto space-y-2">
-              {data.others && data.others.length > 0 ? (
-                data.others.map((msg, idx) => (
-                  <div key={idx} className="bg-[#2a2c3c] p-3 rounded-md text-sm text-white">
-                    {msg}
-                  </div>
-                ))
-              ) : (
-                <p className="text-gray-400 italic text-center p-4">No messages found</p>
-              )}
-            </div>
+            <div className="max-h-[300px] overflow-y-auto space-y-2 border border-gray-700 rounded-md p-3 bg-[#1e2130] text-white">
+  {data.others && data.others.length > 0 ? (
+    data.others.map((msg, idx) => (
+      <div
+  key={idx}
+  className="bg-[#2a2c3c] p-3 rounded-md text-sm text-white break-words whitespace-pre-wrap"
+>
+  {msg}
+</div>
+
+    ))
+  ) : (
+    <p className="text-gray-400 italic text-center p-4">
+      No messages found
+    </p>
+  )}
+</div>
+
           </div>
         </div>
       )}
