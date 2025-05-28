@@ -5,7 +5,6 @@ const router = express.Router();
 
 router.get('/ticket', async (req, res) => {
   try {
-    // 1. Tüm ticket'ları çek
     const allTickets = await axios.get(`${process.env.PLATFORM}/tickets`, {
       headers: {
         'Content-Type': 'application/json',
@@ -18,15 +17,11 @@ router.get('/ticket', async (req, res) => {
     });
 
     const ticketIds = allTickets.data?.data?.list.map(item => item.id) ?? [];
-
-    // Sonuç dizileri
     const refill = [];
     const refund = [];
     const speed_up = [];
     const delayed_refund = [];
     const others = [];
-
-    // 2. Tüm ID'ler üzerinden tek tek detay istekleri at
     const requests = ticketIds.map(async (ticketId) => {
       try {
         const response = await axios.get(`${process.env.PLATFORM}/tickets/${ticketId}`, {
@@ -37,8 +32,6 @@ router.get('/ticket', async (req, res) => {
         });
 
         const messages = response.data?.data?.messages ?? [];
-
-        // Son support mesajının index'ini bul
         let lastSupportIndex = -1;
         for (let i = messages.length - 1; i >= 0; i--) {
           if (messages[i].sender_name === 'support') {
@@ -72,20 +65,16 @@ router.get('/ticket', async (req, res) => {
         });
       } catch (err) {
         console.warn(`Ticket ${ticketId} alınamadı:`, err?.response?.data || err.message);
-        // Devam edebilmek için hata bastırılıyor
       }
     });
 
-    // Tüm ticket detay isteklerini paralel çalıştır
     await Promise.all(requests);
-
-    // 3. Sonuçları dön
     res.json({
       refill,
       refund,
       speed_up,
       delayed_refund,
-      others // 👈 yeni dizi burada
+      others
     });
 
   } catch (error) {

@@ -17,6 +17,8 @@
     "env": "^0.0.2",
     "express": "^5.1.0",
     "lucide-react": "^0.344.0",
+    "p-limit": "^6.2.0",
+    "path": "^0.12.7",
     "puppeteer": "^24.8.2",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",

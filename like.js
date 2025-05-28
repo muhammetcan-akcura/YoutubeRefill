@@ -1,14 +1,12 @@
 import fs from 'fs/promises';
 import puppeteer from 'puppeteer';
 
-// Temel yapılandırma
-const WAIT_BETWEEN_REQUESTS_MS = 5000;  // Bekleme süresi 15 saniyeden 5 saniyeye çekildi.
+
+const WAIT_BETWEEN_REQUESTS_MS = 5000;  
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
-// Yardımcı fonksiyonlar
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-const randomDelay = () => Math.floor(Math.random() * 2000) + WAIT_BETWEEN_REQUESTS_MS;  // 2 saniye daha hızlı.
-
+const randomDelay = () => Math.floor(Math.random() * 2000) + WAIT_BETWEEN_REQUESTS_MS;  
 const normalizeLikes = (str) => {
   if (!str) return 0;
   str = str.toString().trim();
@@ -17,18 +15,18 @@ const normalizeLikes = (str) => {
   return parseInt(str.replace(/,/g, '')) || 0;
 };
 
-// Beğeni sayısını alma
+
 const getLikeCount = async (page, link) => {
   try {
     console.log(`Sayfaya gidiliyor: ${link}`);
     await page.goto(link, { waitUntil: ['load', 'domcontentloaded'], timeout: 90000 });
     
-    // İnsan davranışını taklit etmek için bekleme
-    await sleep(2000);  // Daha hızlı bekleme süresi
+   
+    await sleep(2000); 
 
     console.log('Sayfa yüklendi, çerezler kontrol ediliyor...');
     
-    // Çerezleri kabul et düğmesi varsa tıkla
+  
     try {
       const cookieSelector = 'button[data-e2e="cookie-banner-accept"]';
       const cookieButton = await page.$(cookieSelector);
@@ -43,17 +41,16 @@ const getLikeCount = async (page, link) => {
     
     console.log('Sayfa kaydırılıyor...');
     
-    // Sayfayı aşağı kaydır
+    
     await page.evaluate(() => {
       window.scrollBy(0, 600);
     });
-    
-    // Daha fazla yükleme için bekle
-    await sleep(3000);  // Kısaltılmış bekleme süresi
+ 
+    await sleep(3000);  
     
     console.log('Like elementleri aranıyor...');
     
-    // Alternatif selektörler - TikTok selektörleri değişebilir
+    
     const possibleSelectors = [
       'strong[data-e2e="like-count"]',
       'span[data-e2e="like-count"]',
@@ -65,7 +62,7 @@ const getLikeCount = async (page, link) => {
 
     let likeText = null;
     
-    // Tüm olası selektörleri dene
+    
     for (const selector of possibleSelectors) {
       try {
         console.log(`Selektör deneniyor: ${selector}`);
@@ -81,14 +78,13 @@ const getLikeCount = async (page, link) => {
       }
     }
     
-    // Selektör bulunamadıysa HTML içeriğini kontrol et
+   
     if (!likeText) {
       console.log('Selektörler başarısız, sayfanın HTML içeriği analiz ediliyor...');
       
-      // Sayfanın HTML içeriğini al
+     
       const content = await page.content();
       
-      // Sayfa içeriğinde beğeni sayısını ara
       const match = content.match(/(\d+(?:\.\d+)?[KMB]?) (beğenme|likes|like)/i);
       if (match && match[1]) {
         likeText = match[1];
@@ -108,17 +104,17 @@ const getLikeCount = async (page, link) => {
   }
 };
 
-// Ana çalıştırma fonksiyonu
+
 const run = async () => {
   try {
-    // Test siparişi
+    
     const orders = []
     
-    // refill.txt dosyasını açma
+    
     console.log('Refill dosyası oluşturuluyor...');
     const refillStream = await fs.open('like.txt', 'w');
     
-    // Tarayıcı başlatma seçenekleri (eski sürüm Puppeteer uyumlu)
+    
     const browserOptions = {
       headless: false,
       args: [
@@ -134,12 +130,11 @@ const run = async () => {
     console.log('Tarayıcı başlatılıyor...');
     const browser = await puppeteer.launch(browserOptions);
     const page = await browser.newPage();
-    
-    // Tarayıcı parmak izi değiştirme
+
     await page.setUserAgent(USER_AGENT);
     await page.setViewport({ width: 430, height: 900 });
     
-    // Mobil tarayıcı olarak gösterme
+    
     await page.setExtraHTTPHeaders({
       'Accept-Language': 'tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7'
     });
@@ -192,5 +187,4 @@ const run = async () => {
   }
 };
 
-// Uygulamayı başlat
 run();

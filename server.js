@@ -4,11 +4,13 @@ import axios from 'axios'
 import cors from 'cors'
 import dotenv from 'dotenv';
 import TicketRouters from './ticketRouter.js';
+import TwitterRouters from './twitterRouters.js';
 dotenv.config();
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(TicketRouters)
+app.use(TwitterRouters)
 const apikey = process.env.apikey;
 app.post('/api/orders', async (req, res) => {
   const { ids } = req.body;

@@ -269,7 +269,7 @@ const missingOver90 :any= [];
     return `${item.mainID}: bellow start count ${item.currentCount} - ${item.startCount}`;
   }
 
-  if (missingPercent >= 80) {
+  if (missingPercent <= 20) {
     missingOver90.push(item.mainID); 
   }
 

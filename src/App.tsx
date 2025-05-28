@@ -1,14 +1,13 @@
-import Sidebar from './components/sidebar/sidebar';
-import Ticket from './ticket';
-import YoutubeViewerCheck from './YoutubeStatsChecker';
+import Sidebar from "./components/sidebar/sidebar"
+import Ticket from "./ticket"
+import YoutubeViewerCheck from "./YoutubeStatsChecker"
+import TwitterDataFetcher from "./twitter/twitter"
 
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 function App() {
   return (
-    
-  
-     <Router>
+    <Router>
       {/* Full height screen, flex row */}
       <div className="min-h-screen flex bg-gradient-to-br from-gray-900 to-gray-800">
         <Sidebar /> {/* Sol kısım */}
@@ -16,13 +15,12 @@ function App() {
           <Routes>
             <Route path="/" element={<YoutubeViewerCheck />} />
             <Route path="/ticket" element={<Ticket />} />
+            <Route path="/twitter" element={<TwitterDataFetcher />} />
           </Routes>
         </main>
       </div>
     </Router>
-    
-   
-  );
+  )
 }
 
-export default App;
+export default App
