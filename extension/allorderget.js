@@ -13,8 +13,8 @@ const apikey = process.env.apikey;
 async function getAllOrders() {
   let allResults = [];
   let sayac = 0;
-const now = Math.floor(new Date('2025-06-12T00:00:00Z').getTime() / 1000);
-const oneMonthAgo = Math.floor(new Date('2025-05-31T00:00:00Z').getTime() / 1000);
+const now = Math.floor(new Date('2025-07-07T00:00:00Z').getTime() / 1000);
+const oneMonthAgo = Math.floor(new Date('2025-06-07T00:00:00Z').getTime() / 1000);
   while (true) {
     try {
       const response = await axios.get('https://smmexclusive.com/adminapi/v2/orders', {
@@ -25,14 +25,15 @@ const oneMonthAgo = Math.floor(new Date('2025-05-31T00:00:00Z').getTime() / 1000
         params: {
           limit: 0,
           offset: sayac * 100,
-          created_from: oneMonthAgo,
-          created_to: now,
-          provider:"fastpanel.io",
-          order_status:"completed"
+          service_ids:"4564,4565,4566",
+          //  created_from: oneMonthAgo,
+          //  created_to: now,
+          provider:"tiktokserver.com",
+          order_status:"in_progress"
         },
       });
 
-      const data = response.data?.data?.list.map(item=>item.id);
+      const data = response.data?.data?.list.map(item=>item.external_id);
       allResults.push(...data);
 
       console.log(`Sayfa ${sayac + 1}: ${data.length} kayıt alındı`);
@@ -51,7 +52,7 @@ const oneMonthAgo = Math.floor(new Date('2025-05-31T00:00:00Z').getTime() / 1000
   const resultText = allResults.join(",");
 
   try {
-    await fs.writeFile('siparisler.txt', resultText); // 👈 dosyaya yaz
+    await fs.writeFile('siparisler(fast).txt', resultText); // 👈 dosyaya yaz
     console.log('siparisler.txt dosyasına yazıldı');
   } catch (err) {
     console.error('Dosya yazılırken hata oluştu:', err);
