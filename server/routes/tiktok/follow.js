@@ -105,7 +105,7 @@ async function fetchUserStats(username, originalInput) {
         },
       });
 
-      const likes = response.data?.user?.follower_count || 0;
+      const likes = response.data?.user?.follower_count || -1;
 
       const result = {
         url: originalInput,
@@ -170,10 +170,6 @@ router.post("/api/tiktok/followers", async (req, res) => {
       const username = extractUsernameFromUrl(input);
       const result = await fetchUserStats(username, input);
       results.push(result);
-
-      if (i < links.length - 1) {
-        await sleep(115);
-      }
     }
 
     res.json({

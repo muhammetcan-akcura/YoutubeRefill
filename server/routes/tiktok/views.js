@@ -167,7 +167,7 @@ async function fetchVideoLikes(videoId, originalUrl) {
           "x-rapidapi-host": "tokapi-mobile-version.p.rapidapi.com",
         },
       });
-      const likes = response.data?.aweme_detail?.statistics?.play_count || 0;
+      const likes = response.data?.aweme_detail?.statistics?.play_count || -1;
 
       const result = {
         url: originalUrl,

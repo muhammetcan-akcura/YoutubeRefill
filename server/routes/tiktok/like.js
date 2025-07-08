@@ -245,11 +245,6 @@ router.post("/api/tiktok/likes", async (req, res) => {
       const videoId = url;
       const result = await fetchVideoLikes(videoId, url);
       results.push(result);
-
-      // Son istek değilse 1.15 saniye bekle
-      if (i < links.length - 1) {
-        await sleep(115);
-      }
     }
 
     res.json({

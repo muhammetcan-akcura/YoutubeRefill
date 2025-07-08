@@ -25,7 +25,11 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
   const [ids, setIds] = useState("")
   const [orders, setOrders] = useState<Order[]>([])
   const [tikTokData, setTikTokData] = useState<TikTokData[]>([])
- 
+ const handleLinkClick = (link: string) => {
+    // TikTok link'i ise direkt aç, değilse TikTok profil URL'si oluştur
+    const url = link.startsWith("http") ? link : `https://www.tiktok.com/@${link}`
+    window.open(url, "_blank", "noopener,noreferrer")
+  }
   const [loading, setLoading] = useState(false)
 const handleDownload = () => {
   if (orders.length === 0 || tikTokData.length === 0) return;
@@ -72,16 +76,21 @@ const handleDownload = () => {
     a.click();
     URL.revokeObjectURL(url);
   };
+ const missingtotal = Number(belowTargetData
+  .filter(item => item.currentCount !== -1)
+  .reduce((total, item) => total + item.missing, 0)) * 0.00045
+  console.log(missingtotal,"missingtotal")
 
     const aboveContent = aboveTargetIds.join(",") || "x"
     const notFound = belowTargetData.filter(item => item.currentCount === - 1).map((d) => d.id).join(",") || "x"
     const idsLine = belowTargetData.filter(item => item.currentCount !== - 1).map((d) => d.id).join(",") || "x"
     const refillExternal = belowTargetData.filter(item => item.currentCount !== - 1).map((d) => d.external_id).join(",") || "x"
     const refillLines = belowTargetData.filter(item => item.currentCount !== - 1).map((d) => `${d.external_id} refill(${d.currentCount}) => missing amount(${d.missing})`).join("\n") || "x"
-    const detailLines = belowTargetData.filter(item => item.currentCount !== - 1).map((d) => `3 | ${d.link} | ${d.missing}`) 
+    const detailLines = belowTargetData.filter(item => item.currentCount !== - 1).map((d) => `3 | ${d.link} | ${d.missing}`)
+    
       .join("\n") || "x"
 
-    const finalContent = `refill main ids\n--------------------\n${idsLine}\n\nrefill provider ids\n--------------------\n${refillExternal}\n\nrefill provider format\n--------------------\n${refillLines}\n\nrefill mass order format\n--------------------\n${detailLines}\n\nnot found ids\n--------------------\n${notFound}\n\nsuccess main id\n--------------------\n${aboveContent}`;
+    const finalContent = `refill main ids\n--------------------\n${idsLine}\n\nrefill provider ids\n--------------------\n${refillExternal}\n\nrefill provider format\n--------------------\n${refillLines}\n\nrefill mass order format - ($${missingtotal})\n--------------------\n${detailLines}\n\nnot found ids\n--------------------\n${notFound}\n\nsuccess main id\n--------------------\n${aboveContent}`;
     downloadTxt("results.txt", finalContent);
 };
 
@@ -138,7 +147,7 @@ const handleDownload = () => {
   }
   const fetchTikTokData = async (links: string[]) => {
     try {
-      const response = await axios.post(`https://youtuberefill-1.onrender.com${endpoint}`, {
+      const response = await axios.post(`http://localhost:5000${endpoint}`, {
         links,
       })
       setTikTokData(response.data.data)
@@ -323,9 +332,12 @@ const handleDownload = () => {
                           </span>
                         </td>
                         <td className="py-4 px-4">
-                          <div className="max-w-xs truncate text-blue-400 hover:text-blue-300 transition-colors">
+                          <button
+                            onClick={() => handleLinkClick(order.link)}
+                            className="max-w-xs truncate text-blue-400 hover:text-blue-300 transition-colors cursor-pointer underline hover:no-underline"
+                          >
                             {order.link}
-                          </div>
+                          </button>
                         </td>
                         <td className="py-4 px-4">
                           <span className="text-gray-300 font-medium">{order.start_count}</span>
@@ -366,19 +378,27 @@ const handleDownload = () => {
                           )}
                         </td>
                         <td className="py-4 px-4">
-                          {isBelowTarget ? (
-                            <div className="flex items-center gap-2">
-                              <span className="text-red-400 font-semibold">{dropRate.toFixed(1)}%</span>
-                              <div className="w-20 bg-gray-700 rounded-full h-2">
-                                <div
-                                  className="bg-red-500 h-2 rounded-full transition-all duration-300"
-                                  style={{ width: `${Math.min(dropRate, 100)}%` }}
-                                ></div>
+                          {tikTokInfo ? (
+                            isBelowTarget ? (
+                              <div className="flex items-center gap-2">
+                                <span className="text-red-400 font-semibold">{dropRate.toFixed(1)}%</span>
+                                <div className="w-20 bg-gray-700 rounded-full h-2">
+                                  <div
+                                    className="bg-red-500 h-2 rounded-full transition-all duration-300"
+                                    style={{ width: `${Math.min(dropRate, 100)}%` }}
+                                  ></div>
+                                </div>
                               </div>
-                            </div>
+                            ) : tikTokInfo?.count === -1 ? (
+                              <span className="text-red-400 font-semibold">❌</span>
+                            ) : (
+                              <span className="text-green-400 font-semibold">✓ Target Met</span>
+                            )
                           ) : (
-                            tikTokInfo?.count === - 1 ? <span className="text-green-400 font-semibold">❌</span> :
-                            <span className="text-green-400 font-semibold">✓ Target Met</span>
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                              <span className="text-gray-400 text-sm">Loading...</span>
+                            </div>
                           )}
                         </td>
                       </tr>

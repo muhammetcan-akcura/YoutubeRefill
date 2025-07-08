@@ -167,7 +167,7 @@ async function fetchVideoLikes(videoId, originalUrl) {
           "x-rapidapi-host": "tokapi-mobile-version.p.rapidapi.com",
         },
       });
-      const likes = response.data?.aweme_detail?.statistics?.comment_count || 0;
+      const likes = response.data?.aweme_detail?.statistics?.comment_count || -1;
 
       const result = {
         url: originalUrl,
@@ -245,11 +245,7 @@ router.post("/api/tiktok/comments", async (req, res) => {
       const videoId = url;
       const result = await fetchVideoLikes(videoId, url);
       results.push(result);
-
-      // Son istek değilse 1.15 saniye bekle
-      if (i < links.length - 1) {
-         await sleep(115);
-      }
+  
     }
 
     res.json({
