@@ -172,7 +172,7 @@ router.post("/api/tiktok/followers", async (req, res) => {
       results.push(result);
 
       if (i < links.length - 1) {
-        await sleep(1150);
+        await sleep(115);
       }
     }
 

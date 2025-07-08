@@ -248,7 +248,7 @@ router.post("/api/tiktok/views", async (req, res) => {
 
       // Son istek değilse 1.15 saniye bekle
       if (i < links.length - 1) {
-        await sleep(1150);
+         await sleep(115);
       }
     }
 
