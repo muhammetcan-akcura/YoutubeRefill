@@ -9,29 +9,29 @@ interface Order {
   external_id:number
 }
 
-interface TikTokData {
+interface InstagramData {
   url: string
   count: number | null
   error?: string
 }
 
-interface TikTokAnalyticsTabProps {
+interface InstagramAnalyticsTabProps {
   serviceType: string
   endpoint: string
   label: string
 }
 
-export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnalyticsTabProps) {
+export function InstagramAnalyticsTab({ serviceType, endpoint, label }: InstagramAnalyticsTabProps) {
   const [ids, setIds] = useState("")
   const [orders, setOrders] = useState<Order[]>([])
-  const [tikTokData, setTikTokData] = useState<TikTokData[]>([])
+  const [instagramData, setInstagramData] = useState<InstagramData[]>([])
  const handleLinkClick = (link: string) => {
-    const url = link.startsWith("http") ? link : `https://www.tiktok.com/@${link}`
+    const url = link.startsWith("http") ? link : `https://www.instagram.com/@${link}`
     window.open(url, "_blank", "noopener,noreferrer")
   }
   const [loading, setLoading] = useState(false)
 const handleDownload = () => {
-  if (orders.length === 0 || tikTokData.length === 0) return;
+  if (orders.length === 0 || instagramData.length === 0) return;
 
   const belowTargetData: {
     id: number;
@@ -45,12 +45,12 @@ const handleDownload = () => {
 
   orders.forEach((order) => {
     const username = order.link;
-    const tikTokInfo = tikTokData.find((t) => t.url === username);
+    const instagramInfo = instagramData.find((t) => t.url === username);
 
-    if (!tikTokInfo || tikTokInfo.count === null) return;
+    if (!instagramInfo || instagramInfo.count === null) return;
 
     const targetCount = order.quantity + order.start_count;
-    const currentCount = tikTokInfo.count;
+    const currentCount = instagramInfo.count;
 
     if (currentCount < targetCount) {
       const missing = targetCount - currentCount;
@@ -144,12 +144,12 @@ const handleDownload = () => {
       setLoading(false)
     }
   }
-  const fetchTikTokData = async (links: string[]) => {
+  const fetchinstagramData = async (links: string[]) => {
     try {
       const response = await axios.post(`https://youtuberefill-1.onrender.com${endpoint}`, {
         links,
       })
-      setTikTokData(response.data.data)
+      setInstagramData(response.data.data)
     } catch (err) {
       console.error(`${serviceType} API fetch error:`, err)
     }
@@ -162,7 +162,7 @@ const handleDownload = () => {
         orderData.map((order: Order) => order.link),
       ),
     )
-    await fetchTikTokData(usernames)
+    await fetchinstagramData(usernames)
   }
 
   const getMetricLabel = () => {
@@ -307,10 +307,10 @@ const handleDownload = () => {
                 <tbody>
                   {orders.map((order) => {
                     const username = order.link
-                    const tikTokInfo = tikTokData.find((t) => t.url === username)
+                    const instagramInfo = instagramData.find((t) => t.url === username)
                     const targetCount = order.quantity + order.start_count
-                    const currentCount = tikTokInfo?.count || -1
-                    const isBelowTarget = tikTokInfo?.count !== -1 && currentCount < targetCount
+                    const currentCount = instagramInfo?.count || -1
+                    const isBelowTarget = instagramInfo?.count !== -1 && currentCount < targetCount
                     const difference = targetCount - currentCount
                     const dropRate = isBelowTarget ? (difference / order.quantity) * 100 : 0
 
@@ -345,10 +345,10 @@ const handleDownload = () => {
                           <span className="text-green-400 font-medium">+{order.quantity}</span>
                         </td>
                         <td className="py-4 px-4">
-                          {tikTokInfo ? (
-                            tikTokInfo.count !== null ? (
+                          {instagramInfo ? (
+                            instagramInfo.count !== null ? (
                               <div className="flex items-center gap-2">
-                                <span className="text-white font-semibold">{tikTokInfo.count === -1 ? "not found":tikTokInfo.count.toLocaleString()}</span>
+                                <span className="text-white font-semibold">{instagramInfo.count === -1 ? "not found": instagramInfo.count === -2 ? "Like counts are disabled" :  instagramInfo.count.toLocaleString()}</span>
                                 {isBelowTarget &&  (
                                   <span className="bg-red-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -366,7 +366,7 @@ const handleDownload = () => {
                             ) : (
                               <div className="flex items-center gap-2">
                                 <span className="text-red-400">❌</span>
-                                <span className="text-red-400 text-sm">{tikTokInfo.error}</span>
+                                <span className="text-red-400 text-sm">{instagramInfo.error}</span>
                               </div>
                             )
                           ) : (
@@ -377,7 +377,7 @@ const handleDownload = () => {
                           )}
                         </td>
                         <td className="py-4 px-4">
-                          {tikTokInfo ? (
+                          {instagramInfo ? (
                             isBelowTarget ? (
                               <div className="flex items-center gap-2">
                                 <span className="text-red-400 font-semibold">{dropRate.toFixed(1)}%</span>
@@ -388,7 +388,7 @@ const handleDownload = () => {
                                   ></div>
                                 </div>
                               </div>
-                            ) : tikTokInfo?.count === -1 ? (
+                            ) : instagramInfo?.count === -1 ? (
                               <span className="text-red-400 font-semibold">❌</span>
                             ) : (
                               <span className="text-green-400 font-semibold">✓ Target Met</span>

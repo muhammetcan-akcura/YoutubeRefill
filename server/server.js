@@ -11,6 +11,10 @@ import TiktokWiewsRouters from './routes/tiktok/views.js'
 import TiktokSharesRouters from './routes/tiktok/share.js'
 import TiktokSavesRouters from './routes/tiktok/save.js'
 import TiktokCommentRouters from './routes/tiktok/comments.js'
+import InstagramWiewsRouters from './routes/instagram/views.js'
+import InstagramLikesRouters from './routes/instagram/like.js'
+import InstagramFollowRouters from './routes/instagram/follow.js'
+import InstagramCommentRouters from './routes/instagram/comments.js'
 dotenv.config();
 const app = express();
 app.use(cors());
@@ -23,6 +27,10 @@ app.use(TiktokWiewsRouters)
 app.use(TiktokSharesRouters)
 app.use(TiktokSavesRouters)
 app.use(TiktokCommentRouters)
+app.use(InstagramWiewsRouters)
+app.use(InstagramLikesRouters)
+app.use(InstagramFollowRouters)
+app.use(InstagramCommentRouters)
 const apikey = process.env.apikey;
 app.post('/api/orders', async (req, res) => {
   const { ids } = req.body;
