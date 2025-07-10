@@ -190,23 +190,6 @@ export function InstagramAnalyticsTab({ serviceType, endpoint, label }: Instagra
     await fetchinstagramData(usernames)
   }
 
-  // const getMetricLabel = () => {
-  //   switch (serviceType) {
-  //     case "followers":
-  //       return "Followers"
-  //     case "likes":
-  //       return "Likes"
-  //     case "views":
-  //       return "Views"
-  //     case "saves":
-  //       return "Saves"
-  //     case "shares":
-  //       return "Shares"
-  //     default:
-  //       return "Count"
-  //   }
-  // }
-
   const resultsData = getResultsData()
 
   const tabs = [
@@ -325,11 +308,6 @@ export function InstagramAnalyticsTab({ serviceType, endpoint, label }: Instagra
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 p-4">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">{label} Analytics</h1>
-        <p className="text-gray-400">Track and analyze your {label.toLowerCase()} orders performance</p>
-      </div>
 
       {/* Input Section */}
       <div className="bg-gray-900 border border-gray-700 rounded-2xl shadow-xl overflow-hidden">
