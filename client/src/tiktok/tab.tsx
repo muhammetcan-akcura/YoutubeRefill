@@ -1,18 +1,22 @@
+"use client"
+
 import { useState } from "react"
 import axios from "axios"
+import { Search, ExternalLink, AlertTriangle, CheckCircle, XCircle, Eye, BarChart3, Copy, Check } from "lucide-react"
 
 interface Order {
   id: number
   link: string
   start_count: number
   quantity: number
-  external_id:number
+  external_id: number
 }
 
 interface TikTokData {
   url: string
   count: number | null
   error?: string
+  status: number
 }
 
 interface TikTokAnalyticsTabProps {
@@ -25,77 +29,105 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
   const [ids, setIds] = useState("")
   const [orders, setOrders] = useState<Order[]>([])
   const [tikTokData, setTikTokData] = useState<TikTokData[]>([])
- const handleLinkClick = (link: string) => {
+  const [loading, setLoading] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState("refill-main")
+  const [copiedTab, setCopiedTab] = useState<string | null>(null)
+
+  const handleLinkClick = (link: string) => {
     const url = link.startsWith("http") ? link : `https://www.tiktok.com/@${link}`
     window.open(url, "_blank", "noopener,noreferrer")
   }
-  const [loading, setLoading] = useState(false)
-const handleDownload = () => {
-  if (orders.length === 0 || tikTokData.length === 0) return;
 
-  const belowTargetData: {
-    id: number;
-    link: string;
-    missing: number;
-    external_id:number
-    currentCount:number
-  }[] = [];
-
-  const aboveTargetIds: number[] = [];
-
-  orders.forEach((order) => {
-    const username = order.link;
-    const tikTokInfo = tikTokData.find((t) => t.url === username);
-
-    if (!tikTokInfo || tikTokInfo.count === null) return;
-
-    const targetCount = order.quantity + order.start_count;
-    const currentCount = tikTokInfo.count;
-
-    if (currentCount < targetCount) {
-      const missing = targetCount - currentCount;
-      belowTargetData.push({
-        currentCount:currentCount,
-        id: order.id,
-        link: order.link,
-        missing,
-        external_id:order.external_id
-      });
-    } else {
-      aboveTargetIds.push(order.id);
+  const handleCopyToClipboard = async (content: string, tabId: string) => {
+    try {
+      await navigator.clipboard.writeText(content)
+      setCopiedTab(tabId)
+      setTimeout(() => setCopiedTab(null), 2000)
+    } catch (err) {
+      console.error('Failed to copy:', err)
     }
-  });
+  }
 
-  const downloadTxt = (filename: string, content: string) => {
-    const blob = new Blob([content], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
- const missingtotal = Number(belowTargetData
-  .filter(item => item.currentCount !== -1)
-  .reduce((total, item) => total + item.missing, 0)) * 0.00045
-  console.log(missingtotal,"missingtotal")
+  const getResultsData = () => {
+    if (orders.length === 0 || tikTokData.length === 0) return null
+
+    const belowTargetData: {
+      id: number
+      link: string
+      missing: number
+      external_id: number
+      currentCount: number
+    }[] = []
+    const aboveTargetIds: number[] = []
+
+    orders.forEach((order) => {
+      const username = order.link
+      const tikTokInfo = tikTokData.find((t) => t.url === username)
+      if (!tikTokInfo || tikTokInfo.count === null) return
+
+      const targetCount = order.quantity + order.start_count
+      const currentCount = tikTokInfo.count
+
+      if (currentCount < targetCount) {
+        const missing = targetCount - currentCount
+        belowTargetData.push({
+          currentCount: currentCount,
+          id: order.id,
+          link: order.link,
+          missing,
+          external_id: order.external_id,
+        })
+      } else {
+        aboveTargetIds.push(order.id)
+      }
+    })
+
+    const missingtotal =
+      Number(
+        belowTargetData.filter((item) => item.currentCount !== -1).reduce((total, item) => total + item.missing, 0),
+      ) * 0.00045
 
     const aboveContent = aboveTargetIds.join(",") || "x"
-    const notFound = belowTargetData.filter(item => item.currentCount === - 1).map((d) => d.id).join(",") || "x"
-    const idsLine = belowTargetData.filter(item => item.currentCount !== - 1).map((d) => d.id).join(",") || "x"
-    const refillExternal = belowTargetData.filter(item => item.currentCount !== - 1).map((d) => d.external_id).join(",") || "x"
-    const refillLines = belowTargetData.filter(item => item.currentCount !== - 1).map((d) => `${d.external_id} refill(${d.currentCount}) => missing amount(${d.missing})`).join("\n") || "x"
-    const detailLines = belowTargetData.filter(item => item.currentCount !== - 1).map((d) => `3 | ${d.link} | ${d.missing}`)
-    
-      .join("\n") || "x"
+    const notFound =
+      belowTargetData
+        .filter((item) => item.currentCount === -1)
+        .map((d) => d.id)
+        .join(",") || "x"
+    const idsLine =
+      belowTargetData
+        .filter((item) => item.currentCount !== -1)
+        .map((d) => d.id)
+        .join(",") || "x"
+    const refillExternal =
+      belowTargetData
+        .filter((item) => item.currentCount !== -1)
+        .map((d) => d.external_id)
+        .join(",") || "x"
+    const refillLines =
+      belowTargetData
+        .filter((item) => item.currentCount !== -1)
+        .map((d) => `${d.external_id} refill(${d.currentCount}) => missing amount(${d.missing})`)
+        .join("\n") || "x"
+    const detailLines =
+      belowTargetData
+        .filter((item) => item.currentCount !== -1)
+        .map((d) => `3 | ${d.link} | ${d.missing}`)
+        .join("\n") || "x"
 
-    const finalContent = `refill main ids\n--------------------\n${idsLine}\n\nrefill provider ids\n--------------------\n${refillExternal}\n\nrefill provider format\n--------------------\n${refillLines}\n\nrefill mass order format - ($${missingtotal})\n--------------------\n${detailLines}\n\nnot found ids\n--------------------\n${notFound}\n\nsuccess main id\n--------------------\n${aboveContent}`;
-    downloadTxt("results.txt", finalContent);
-};
+    return {
+      refillMainIds: idsLine,
+      refillProviderIds: refillExternal,
+      refillProviderFormat: refillLines,
+      refillMassOrderFormat: detailLines,
+      missingTotal: missingtotal,
+      notFoundIds: notFound,
+      successMainIds: aboveContent,
+    }
+  }
 
   const fetchOrdersFromApi = async (ids: string) => {
     setLoading(true)
-
     try {
       const formattedIdsArray = ids
         .trim()
@@ -110,13 +142,11 @@ const handleDownload = () => {
       const chunkSize = 100
       const chunks = []
 
-      // ID'leri 100'erli gruplara ayır
       for (let i = 0; i < formattedIdsArray.length; i += chunkSize) {
         chunks.push(formattedIdsArray.slice(i, i + chunkSize))
       }
 
       const allResults = []
-
       for (let i = 0; i < chunks.length; i++) {
         const response = await axios.post("https://youtuberefill-1.onrender.com/api/orders", {
           ids: chunks[i].join(","),
@@ -128,7 +158,6 @@ const handleDownload = () => {
 
         const chunkResults = response.data.data.list
 
-        // Doğru indexlerde ekle
         for (let j = 0; j < chunkResults.length; j++) {
           const resultIndex = i * chunkSize + j
           allResults[resultIndex] = chunkResults[j]
@@ -144,6 +173,7 @@ const handleDownload = () => {
       setLoading(false)
     }
   }
+
   const fetchTikTokData = async (links: string[]) => {
     try {
       const response = await axios.post(`https://youtuberefill-1.onrender.com${endpoint}`, {
@@ -157,11 +187,7 @@ const handleDownload = () => {
 
   const handleFetch = async () => {
     const orderData = await fetchOrdersFromApi(ids)
-    const usernames = Array.from(
-      new Set(
-        orderData.map((order: Order) => order.link),
-      ),
-    )
+    const usernames = Array.from(new Set(orderData.map((order: Order) => order.link)))
     await fetchTikTokData(usernames)
   }
 
@@ -182,233 +208,435 @@ const handleDownload = () => {
     }
   }
 
+ 
+
+  const resultsData = getResultsData()
+
+  const tabs = [
+    { id: "refill-main", label: "Refill Main", content: resultsData?.refillMainIds, color: "text-emerald-400", icon: "🔄" },
+    { id: "refill-provider", label: "Provider IDs", content: resultsData?.refillProviderIds, color: "text-blue-400", icon: "🔗" },
+    { id: "provider-format", label: "Provider Format", content: resultsData?.refillProviderFormat, color: "text-amber-400", icon: "📋" },
+    { id: "mass-order", label: "Mass Order", content: resultsData?.refillMassOrderFormat, color: "text-purple-400", icon: "📦" },
+    { id: "not-found", label: "Not Found", content: resultsData?.notFoundIds, color: "text-red-400", icon: "❌" },
+    { id: "success", label: "Success", content: resultsData?.successMainIds, color: "text-green-400", icon: "✅" },
+  ]
+
   return (
-    <div className="space-y-8">
-      {/* Input Section */}
-      <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-xl">
-        <div className="p-6 border-b border-gray-700">
-          <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-            <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m-9 0h10m-10 0a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2"
+    <div className="space-y-6">
+ 
+     
+
+     
+   
+      <div className="bg-slate-800 border border-slate-700 rounded-xl">
+        <div className="p-6">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-3">
+                Order IDs <span className="text-slate-500">(comma separated)</span>
+              </label>
+              <textarea
+                rows={4}
+                value={ids}
+                onChange={(e) => setIds(e.target.value)}
+                placeholder="Enter order IDs separated by commas (e.g., 12345,67890,11223)"
+                className="w-full p-4 bg-slate-900 border border-slate-600 rounded-lg text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               />
-            </svg>
-            {label} Orders Analysis
-          </h2>
-        </div>
-
-        <div className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Order ID'leri (virgül ile ayırın)</label>
-            <textarea
-              rows={3}
-              value={ids}
-              onChange={(e) => setIds(e.target.value)}
-              placeholder="Order IDs (e.g. 12345,67890)"
-              className="w-full p-4 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-            />
+            </div>
+            <button
+              onClick={handleFetch}
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-slate-600 disabled:to-slate-700 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-lg transition-all duration-200 flex items-center justify-center gap-3 shadow-lg"
+            >
+              {loading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Analyzing...
+                </>
+              ) : (
+                <>
+                  <Search className="w-5 h-5" />
+                  Analyze {label} Data
+                </>
+              )}
+            </button>
           </div>
-
-          <button
-            onClick={handleFetch}
-            disabled={loading}
-            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-lg transition-all duration-200 flex items-center justify-center gap-3 shadow-lg"
-          >
-            {loading ? (
-              <>
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Loading...
-              </>
-            ) : (
-              <>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                  />
-                </svg>
-                Fetch {label} Data
-              </>
-            )}
-          </button>
         </div>
       </div>
 
       {/* Results Section */}
-      <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-xl">
-        <div className="p-6 border-b border-gray-700 flex items-center justify-between">
+      <div className="bg-slate-800 border border-slate-700 rounded-xl">
+        <div className="p-6 border-b border-slate-700 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-            <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-              />
-            </svg>
-            {label} Results
+            <BarChart3 className="w-5 h-5 text-green-400" />
+            Analysis Results
           </h2>
           {orders.length > 0 && (
-            <div className="flex items-center gap-4">
-              <button
-  onClick={handleDownload}
-  className="bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium px-4 py-2 rounded-lg border border-gray-500 flex items-center gap-2 transition duration-200"
->
-  <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-    />
-  </svg>
-  result.txt indir
-</button>
-
-            </div>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-2 transition duration-200"
+            >
+              <Eye className="w-4 h-4" />
+              View Details
+            </button>
           )}
         </div>
 
-        
         <div className="p-6">
           {orders.length === 0 ? (
-            <div className="text-center py-12 text-gray-400">
-              <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
+            <div className="text-center py-12 text-slate-400">
+              <div className="w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                <BarChart3 className="w-8 h-8 text-slate-400" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-300 mb-2">No data yet</h3>
-              <p className="text-gray-500">Enter Order IDs and start the {label.toLowerCase()} analysis</p>
+              <h3 className="text-xl font-semibold text-slate-300 mb-2">No Analysis Yet</h3>
+              <p className="text-slate-500">Enter order IDs above to start analyzing your {label.toLowerCase()} data</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-700">
-                    <th className="text-left py-4 px-4 text-gray-300 font-semibold">Order ID</th>
-                    <th className="text-left py-4 px-4 text-gray-300 font-semibold">Link</th>
-                    <th className="text-left py-4 px-4 text-gray-300 font-semibold">Start Count</th>
-                    <th className="text-left py-4 px-4 text-gray-300 font-semibold">Quantity</th>
-                    <th className="text-left py-4 px-4 text-gray-300 font-semibold">Current {getMetricLabel()}</th>
-                    <th className="text-left py-4 px-4 text-gray-300 font-semibold">Drop Rate</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {orders.map((order) => {
-                    const username = order.link
-                    const tikTokInfo = tikTokData.find((t) => t.url === username)
-                    const targetCount = order.quantity + order.start_count
-                    const currentCount = tikTokInfo?.count || -1
-                    const isBelowTarget = tikTokInfo?.count !== -1 && currentCount < targetCount
-                    const difference = targetCount - currentCount
-                    const dropRate = isBelowTarget ? (difference / order.quantity) * 100 : 0
+            <div className="space-y-4">
+              {/* Desktop Table */}
+              <div className="hidden lg:block overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-slate-700">
+                      <th className="text-left py-4 px-4 text-slate-300 font-semibold">Order ID</th>
+                      <th className="text-left py-4 px-4 text-slate-300 font-semibold">Link</th>
+                      <th className="text-left py-4 px-4 text-slate-300 font-semibold">Start Count</th>
+                      <th className="text-left py-4 px-4 text-slate-300 font-semibold">Quantity</th>
+                      <th className="text-left py-4 px-4 text-slate-300 font-semibold">Current {getMetricLabel()}</th>
+                      <th className="text-left py-4 px-4 text-slate-300 font-semibold">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {orders.map((order) => {
+                      const username = order.link
+                      const tikTokInfo = tikTokData.find((t) => t.url === username)
+                      const targetCount = order.quantity + order.start_count
+                      const currentCount = tikTokInfo?.count || -1
+                      const isBelowTarget = tikTokInfo?.count !== -1 && currentCount < targetCount
+                      const difference = targetCount - currentCount
+                      const dropRate = isBelowTarget ? (difference / order.quantity) * 100 : 0
 
-                    return (
-                      <tr
-                        key={order.id}
-                        className={`border-b border-gray-700 transition-colors duration-200 ${
-                          isBelowTarget
-                            ? dropRate >= 100
-                              ? "bg-purple-950 hover:bg-purple-800"
-                              : "bg-red-900/30 hover:bg-red-900/40"
-                            : "hover:bg-gray-700/50"
-                        }`}
-                      >
-                        <td className="py-4 px-4">
-                          <span className="bg-blue-600 text-white text-sm font-medium px-3 py-1 rounded-full">
-                            #{order.id}
-                          </span>
-                        </td>
-                        <td className="py-4 px-4">
-                          <button
-                            onClick={() => handleLinkClick(order.link)}
-                            className="max-w-xs truncate text-blue-400 hover:text-blue-300 transition-colors cursor-pointer underline hover:no-underline"
-                          >
-                            {order.link}
-                          </button>
-                        </td>
-                        <td className="py-4 px-4">
-                          <span className="text-gray-300 font-medium">{order.start_count}</span>
-                        </td>
-                        <td className="py-4 px-4">
-                          <span className="text-green-400 font-medium">+{order.quantity}</span>
-                        </td>
-                        <td className="py-4 px-4">
-                          {tikTokInfo ? (
-                            tikTokInfo.count !== null ? (
-                              <div className="flex items-center gap-2">
-                                <span className="text-white font-semibold">{tikTokInfo.count === -1 ? "not found":tikTokInfo.count.toLocaleString()}</span>
-                                {isBelowTarget &&  (
-                                  <span className="bg-red-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                                      />
-                                    </svg>
-                                    -{difference}
+                      return (
+                        <tr
+                          key={order.id}
+                          className={`border-b border-slate-700 transition-colors duration-200 ${
+                            isBelowTarget
+                              ? dropRate >= 100
+                                ? "bg-amber-900/20 hover:bg-amber-800/30"
+                                : "bg-red-900/20 hover:bg-red-800/30"
+                              : "hover:bg-slate-700/50"
+                          }`}
+                        >
+                          <td className="py-4 px-4">
+                            <span className="bg-blue-600 text-white text-sm font-medium px-3 py-1 rounded-full">
+                              #{order.id}
+                            </span>
+                          </td>
+                          <td className="py-4 px-4">
+                            <button
+                              onClick={() => handleLinkClick(order.link)}
+                              className="max-w-xs truncate text-blue-400 hover:text-blue-300 transition-colors cursor-pointer underline hover:no-underline flex items-center gap-1"
+                            >
+                              {order.link}
+                              <ExternalLink className="w-3 h-3" />
+                            </button>
+                          </td>
+                          <td className="py-4 px-4">
+                            <span className="text-slate-300 font-medium">{order.start_count.toLocaleString()}</span>
+                          </td>
+                          <td className="py-4 px-4">
+                            <span className="text-green-400 font-medium">+{order.quantity.toLocaleString()}</span>
+                          </td>
+                          <td className="py-4 px-4">
+                            {tikTokInfo ? (
+                              tikTokInfo.count !== null ? (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-white font-semibold">
+                                    {tikTokInfo.count === -1
+                                      ? "Not Found"
+                                      : tikTokInfo.status === 400
+                                        ? "Account Not Found"
+                                        : tikTokInfo.count.toLocaleString()}
                                   </span>
-                                )}
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <span className="text-red-400">❌</span>
-                                <span className="text-red-400 text-sm">{tikTokInfo.error}</span>
-                              </div>
-                            )
-                          ) : (
-                            <div className="flex items-center gap-2">
-                              <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
-                              <span className="text-gray-400 text-sm">Loading...</span>
-                            </div>
-                          )}
-                        </td>
-                        <td className="py-4 px-4">
-                          {tikTokInfo ? (
-                            isBelowTarget ? (
-                              <div className="flex items-center gap-2">
-                                <span className="text-red-400 font-semibold">{dropRate.toFixed(1)}%</span>
-                                <div className="w-20 bg-gray-700 rounded-full h-2">
-                                  <div
-                                    className="bg-red-500 h-2 rounded-full transition-all duration-300"
-                                    style={{ width: `${Math.min(dropRate, 100)}%` }}
-                                  ></div>
+                                  {tikTokInfo.count !== 0 && tikTokInfo.status !== 400 && isBelowTarget && (
+                                    <span className="bg-red-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                                      <AlertTriangle className="w-3 h-3" />
+                                      -{difference.toLocaleString()}
+                                    </span>
+                                  )}
                                 </div>
-                              </div>
-                            ) : tikTokInfo?.count === -1 ? (
-                              <span className="text-red-400 font-semibold">❌</span>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <XCircle className="w-4 h-4 text-red-400" />
+                                  <span className="text-red-400 text-sm">{tikTokInfo.error}</span>
+                                </div>
+                              )
                             ) : (
-                              <span className="text-green-400 font-semibold">✓ Target Met</span>
-                            )
-                          ) : (
-                            <div className="flex items-center gap-2">
-                              <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
-                              <span className="text-gray-400 text-sm">Loading...</span>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+                              <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                                <span className="text-slate-400 text-sm">Loading...</span>
+                              </div>
+                            )}
+                          </td>
+                          <td className="py-4 px-4">
+                            {tikTokInfo ? (
+                              isBelowTarget ? (
+                                <div className="flex items-center gap-2">
+                                  <span className={`font-semibold ${dropRate >= 100 ? "text-amber-400" : "text-red-400"}`}>
+                                    {dropRate.toFixed(1)}% Drop
+                                  </span>
+                                </div>
+                              ) : tikTokInfo?.count === -1 ? (
+                                <span className="text-red-400 font-semibold flex items-center gap-1">
+                                  <XCircle className="w-4 h-4" />
+                                  Not Found
+                                </span>
+                              ) : (
+                                <span className="text-green-400 font-semibold flex items-center gap-1">
+                                  <CheckCircle className="w-4 h-4" />
+                                  Success
+                                </span>
+                              )
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                                <span className="text-slate-400 text-sm">Loading...</span>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Cards */}
+              <div className="lg:hidden space-y-4">
+                {orders.map((order) => {
+                  const username = order.link
+                  const tikTokInfo = tikTokData.find((t) => t.url === username)
+                  const targetCount = order.quantity + order.start_count
+                  const currentCount = tikTokInfo?.count || -1
+                  const isBelowTarget = tikTokInfo?.count !== -1 && currentCount < targetCount
+                  const difference = targetCount - currentCount
+                  const dropRate = isBelowTarget ? (difference / order.quantity) * 100 : 0
+
+                  return (
+                    <div
+                      key={order.id}
+                      className={`border border-slate-600 rounded-lg p-4 ${
+                        isBelowTarget
+                          ? dropRate >= 100
+                            ? "bg-amber-900/20 border-amber-600/30"
+                            : "bg-red-900/20 border-red-600/30"
+                          : "bg-slate-900/50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="bg-blue-600 text-white text-sm font-medium px-3 py-1 rounded-full">
+                          #{order.id}
+                        </span>
+                        <button
+                          onClick={() => handleLinkClick(order.link)}
+                          className="text-blue-400 hover:text-blue-300 transition-colors"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </button>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-400">Link:</span>
+                          <span className="text-white font-medium truncate ml-2">{order.link}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-400">Start Count:</span>
+                          <span className="text-slate-300">{order.start_count.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-400">Quantity:</span>
+                          <span className="text-green-400">+{order.quantity.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-400">Current:</span>
+                          <div className="flex items-center gap-2">
+                            {tikTokInfo ? (
+                              tikTokInfo.count !== null ? (
+                                <>
+                                  <span className="text-white font-semibold">
+                                    {tikTokInfo.count === -1
+                                      ? "Not Found"
+                                      : tikTokInfo.status === 400
+                                        ? "Account Not Found"
+                                        : tikTokInfo.count.toLocaleString()}
+                                  </span>
+                                  {tikTokInfo.count !== 0 && tikTokInfo.status !== 400 && isBelowTarget && (
+                                    <span className="bg-red-600 text-white text-xs px-2 py-1 rounded-full">
+                                      -{difference.toLocaleString()}
+                                    </span>
+                                  )}
+                                </>
+                              ) : (
+                                <span className="text-red-400 text-sm">{tikTokInfo.error}</span>
+                              )
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                                <span className="text-slate-400 text-sm">Loading...</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-400">Status:</span>
+                          <div>
+                            {tikTokInfo ? (
+                              isBelowTarget ? (
+                                <span className={`font-semibold ${dropRate >= 100 ? "text-amber-400" : "text-red-400"}`}>
+                                  {dropRate.toFixed(1)}% Drop
+                                </span>
+                              ) : tikTokInfo?.count === -1 ? (
+                                <span className="text-red-400 font-semibold flex items-center gap-1">
+                                  <XCircle className="w-4 h-4" />
+                                  Not Found
+                                </span>
+                              ) : (
+                                <span className="text-green-400 font-semibold flex items-center gap-1">
+                                  <CheckCircle className="w-4 h-4" />
+                                  Success
+                                </span>
+                              )
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                                <span className="text-slate-400 text-sm">Loading...</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* Improved Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setIsModalOpen(false)}
+          />
+
+          {/* Modal Content */}
+          <div className="relative bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-slate-700 bg-slate-800/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+                  <BarChart3 className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-white">{label} Analysis Results</h2>
+                  <p className="text-slate-400 text-sm">Export and review your data</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-slate-400 hover:text-white transition-colors p-2 hover:bg-slate-700 rounded-lg"
+              >
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex flex-col h-full max-h-[calc(90vh-88px)]">
+              {/* Mobile Tab Navigation */}
+              <div className="md:hidden border-b border-slate-700 bg-slate-800/50">
+                <select
+                  value={activeTab}
+                  onChange={(e) => setActiveTab(e.target.value)}
+                  className="w-full p-3 bg-slate-800 text-white border-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {tabs.map((tab) => (
+                    <option key={tab.id} value={tab.id}>
+                      {tab.icon} {tab.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Desktop Tab Navigation */}
+              <div className="hidden md:flex border-b border-slate-700 bg-slate-800/50 overflow-x-auto">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2 ${
+                      activeTab === tab.id
+                        ? "text-blue-400 border-b-2 border-blue-400 bg-slate-700/50"
+                        : "text-slate-300 hover:text-white hover:bg-slate-700/50"
+                    }`}
+                  >
+                    <span>{tab.icon}</span>
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Tab Content */}
+              <div className="flex-1 overflow-y-auto p-6">
+                {tabs.map((tab) => (
+                  <div key={tab.id} className={activeTab === tab.id ? "block" : "hidden"}>
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl">
+                      <div className="p-4 border-b border-slate-700 flex items-center justify-between">
+                        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                          <span>{tab.icon}</span>
+                          {tab.label}
+                          {tab.id === "mass-order" && resultsData && (
+                            <span className="text-sm text-slate-400 bg-slate-700 px-2 py-1 rounded-full">
+                              ${resultsData.missingTotal.toFixed(5)}
+                            </span>
+                          )}
+                        </h3>
+                        <button
+                          onClick={() => handleCopyToClipboard(tab.content || "", tab.id)}
+                          className="flex items-center gap-2 px-3 py-2 text-sm bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+                        >
+                          {copiedTab === tab.id ? (
+                            <>
+                              <Check className="w-4 h-4" />
+                              Copied!
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-4 h-4" />
+                              Copy
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      <div className="p-4">
+                        <div className="bg-slate-900 p-4 rounded-lg border border-slate-700">
+                          <pre className={`${tab.color} text-sm whitespace-pre-wrap font-mono leading-relaxed`}>
+                            {tab.content || "No data available"}
+                          </pre>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
