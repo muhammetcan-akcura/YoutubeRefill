@@ -15,6 +15,7 @@ import InstagramWiewsRouters from './routes/instagram/views.js'
 import InstagramLikesRouters from './routes/instagram/like.js'
 import InstagramFollowRouters from './routes/instagram/follow.js'
 import InstagramCommentRouters from './routes/instagram/comments.js'
+import ratesRouters from './routes/rates/index2.js'
 dotenv.config();
 const app = express();
 app.use(cors());
@@ -31,6 +32,8 @@ app.use(InstagramWiewsRouters)
 app.use(InstagramLikesRouters)
 app.use(InstagramFollowRouters)
 app.use(InstagramCommentRouters)
+app.use(ratesRouters)
+
 const apikey = process.env.apikey;
 app.post('/api/orders', async (req, res) => {
   const { ids } = req.body;

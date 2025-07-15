@@ -4,6 +4,7 @@ import YoutubeViewerCheck from "./YoutubeStatsChecker"
 import TwitterDataFetcher from "./twitter/twitter"
 import TiktokDataFetcher from "./tiktok/tiktok"
 import InstagramDataFetcher from "./instagram/instagram"
+import CustomRates from "./customrates/index"
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
             <Route path="/twitter" element={<TwitterDataFetcher />} />
             <Route path="/tiktok" element={<TiktokDataFetcher />} />
             <Route path="/instagram" element={<InstagramDataFetcher />} />
+             <Route path="/custom-rates" element={<CustomRates />} />
           </Routes>
         </main>
       </div>

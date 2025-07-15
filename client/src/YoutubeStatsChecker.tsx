@@ -62,7 +62,7 @@ const YoutubeStatsChecker: React.FC = () => {
       for (let i = 0; i < chunks.length; i++) {
         addLog(`📦 Sending chunk ${i + 1}/${chunks.length} to API...`);
 
-        const response = await axios.post(`https://youtuberefill-1.onrender.com/api/orders`, {
+        const response = await axios.post(`http://localhost:5000/api/orders`, {
           ids: chunks[i].join(','),
         });
 
