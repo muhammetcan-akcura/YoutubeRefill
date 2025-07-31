@@ -15,6 +15,7 @@ const Sidebar = () => {
     { name: "Twitter", path: "/twitter", icon: <Twitter size={18} /> },
     { name: "Ticket", path: "/ticket", icon: <Ticket size={18} /> },
      { name: "Custom Rates", path: "/custom-rates", icon: <BadgePercent size={18} /> },
+        { name: "Services Data", path: "/all-services", icon: <BadgePercent size={18} /> },
   ]
 
   // Handle window resize

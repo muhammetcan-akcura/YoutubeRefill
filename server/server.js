@@ -15,7 +15,10 @@ import InstagramWiewsRouters from './routes/instagram/views.js'
 import InstagramLikesRouters from './routes/instagram/like.js'
 import InstagramFollowRouters from './routes/instagram/follow.js'
 import InstagramCommentRouters from './routes/instagram/comments.js'
-import ratesRouters from './routes/rates/index2.js'
+import ratesRouters from './routes/rates/index.js'
+import siteRoutes from './routes/siteRoutes.js'
+import scrapeRoutes from './routes/scrapeRoutes.js'
+import serviceRoutes from './routes/serviceRoutes.js'
 dotenv.config();
 const app = express();
 app.use(cors());
@@ -33,7 +36,9 @@ app.use(InstagramLikesRouters)
 app.use(InstagramFollowRouters)
 app.use(InstagramCommentRouters)
 app.use(ratesRouters)
-
+app.use(siteRoutes)
+app.use(scrapeRoutes)
+app.use(serviceRoutes)
 const apikey = process.env.apikey;
 app.post('/api/orders', async (req, res) => {
   const { ids } = req.body;

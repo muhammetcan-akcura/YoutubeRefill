@@ -1,7 +1,6 @@
 import express from 'express';
 import axios from 'axios';
 import ExcelJS from 'exceljs';
-import xlsx from 'xlsx';
 import path from 'path';
 
 const router = express.Router();
@@ -19,15 +18,15 @@ const findServiceById = (id) => {
 
 router.get('/custom-rates', async (req, res) => {
   try {
-    const response = await axios.get(`${process.env.PLATFORM2}/users`, {
+    const response = await axios.get(`${process.env.PLATFORM3}/users`, {
       headers: {
         'Content-Type': 'application/json',
-        'X-Api-Key': process.env.API_KEY_YOUTUBEE
+        'X-Api-Key': process.env.API_KEY_SOCIAL
       },
       params: {
         limit: 0,
         offset: 0,
-        ids: process.env.RATES_IDS_YOUTUBEE
+        ids: process.env.RATES_IDS_SOCIALPANEL
       }
     });
 
@@ -145,13 +144,11 @@ router.get('/custom-rates', async (req, res) => {
     // 🟡 All sayfası
     createSheet('All', allOutputData);
 
-    // 👤 Her kullanıcı için ayrı sayfa
     for (const [username, data] of Object.entries(userGroupedData)) {
       const cleanName = username.substring(0, 31).replace(/[\[\]:*?/\\]/g, '');
       createSheet(cleanName, data);
     }
 
-    // 💾 Kaydet
     const outputPath = path.join(process.cwd(), 'custom_rates_profit_report.xlsx');
     await workbook.xlsx.writeFile(outputPath);
 

@@ -62,7 +62,7 @@ const YoutubeStatsChecker: React.FC = () => {
       for (let i = 0; i < chunks.length; i++) {
         addLog(`📦 Sending chunk ${i + 1}/${chunks.length} to API...`);
 
-        const response = await axios.post(`https://youtuberefill-1.onrender.com/api/orders`, {
+        const response = await axios.post(`http://localhost:5000/api/orders`, {
           ids: chunks[i].join(','),
         });
 
@@ -266,6 +266,7 @@ console.log(refillNeeded.map((item: any) => {
         link: item.link,
         quantity: (item.count + item.startCount) - item.currentCount
     }}))
+    
 const missingOver90 :any= [];
 const onlyrefill :any= [];
           const refillLines = refillNeeded
@@ -293,9 +294,18 @@ const onlyrefill :any= [];
 
 
 console.log('IDs with over 90% missing:', missingOver90.join(","));
+let totalQuantity = 0;
 
+const massorder = refillNeeded.map((item: any) => {
+  const quantity = (item.count + item.startCount) - item.currentCount;
+  totalQuantity += quantity;
+  return `38 | ${item.link} | ${quantity}`;
+}).join("\n");
+
+console.log("Toplam Quantity:", totalQuantity);
+console.log("Massorder:\n" + massorder);
           const idList = refillNeeded.map(item => item.mainID).join(',');
-          const finalContent = `${refillLines}\n\n${idList}\n`;
+          const finalContent = `${refillLines}\n\n${idList}\n\n\n ${massorder}`;
           setRefillContent(finalContent);
 
           addLog(`\n${refillNeeded.length} IDs requiring refill found and formats prepared.`);
