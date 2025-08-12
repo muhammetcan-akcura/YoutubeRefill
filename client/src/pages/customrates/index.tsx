@@ -49,7 +49,7 @@ export default function RatesDashboard() {
   const fetchRates = async () => {
     setLoading(true)
     try {
-      const response = await axios.get<ApiResponse>("http://localhost:5000/custom-rates")
+      const response = await axios.get<ApiResponse>("https://youtuberefill-1.onrender.com/custom-rates")
       const list = response.data?.data ?? []
       setRatesData(list)
       setFilteredData(list)
