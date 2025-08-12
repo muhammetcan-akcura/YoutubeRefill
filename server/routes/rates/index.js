@@ -5,6 +5,7 @@ import path from 'path';
 
 const router = express.Router();
 const profit = []
+
 const findServiceById = (id) => {
   for (const category of profit) {
     for (const service of category.services) {
@@ -29,6 +30,8 @@ router.get('/custom-rates', async (req, res) => {
         ids: process.env.RATES_IDS_SOCIALPANEL
       }
     });
+
+
 
     const users = response.data.data.list;
     const allOutputData = [];

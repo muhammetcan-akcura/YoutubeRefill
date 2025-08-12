@@ -4,15 +4,22 @@ import fetch from "node-fetch";
 
 const router = express.Router();
 
-// RapidAPI anahtarları (birden fazla anahtar kullanarak rate limit'i aşabilirsin)
+// ---- RapidAPI Keys ----
 const RAPIDAPI_KEYS = [
   "cdb2001d49msh2a45d9fef1b322ep1b3a56jsnaf70b1052ca1"
 ];
-const cache = new Map();
 
+// ---- Rate limit ----
+const MAX_REQUESTS_PER_MINUTE = 175;
+const WINDOW_MS = 60 * 1000;
+
+// ---- Cache ----
+const cache = new Map();
 const CACHE_TTL = 10 * 60 * 1000;
 
+// ---- Key blocking/rotation ----
 const blockedKeys = new Map();
+let currentKeyIndex = 0;
 
 function isKeyBlocked(key) {
   const blockedUntil = blockedKeys.get(key);
@@ -24,123 +31,70 @@ function isKeyBlocked(key) {
   return true;
 }
 
-// API key rotasyonu için index
-let currentKeyIndex = 0;
-
-// API key seçici (round-robin, blockedKeys'i atlar)
 function getNextApiKey() {
   const len = RAPIDAPI_KEYS.length;
   for (let i = 0; i < len; i++) {
     const key = RAPIDAPI_KEYS[currentKeyIndex];
     currentKeyIndex = (currentKeyIndex + 1) % len;
-    if (!isKeyBlocked(key)) {
-      return key;
-    }
+    if (!isKeyBlocked(key)) return key;
   }
-  // Eğer tüm keyler blocked ise null döner
   return null;
 }
 
-// Redirect linkler için video ID bulma (kısa linkler için)
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// ---- (Opsiyonel) Redirect çözümleyici ----
 async function resolveRedirectAndExtractId(url) {
   try {
-    const response = await fetch(url, {
-      method: 'HEAD',
-      redirect: 'follow'
-    });
-
+    const response = await fetch(url, { method: "HEAD", redirect: "follow" });
     const finalUrl = response.url;
-
-    const match = finalUrl.match(/(?:video|photo|live|story|playlist)\/(\d{10,20})|[?&](?:item_id|share_item_id)=(\d{10,20})/);
-
-    const videoId = match?.[1] || match?.[2];
-
-    if (videoId) {
-      return videoId;
-    } else {
-      console.warn("ID bulunamadı, final URL:", finalUrl);
-      return null;
-    }
+    const match = finalUrl.match(
+      /(?:video|photo|live|story|playlist)\/(\d{10,20})|[?&](?:item_id|share_item_id)=(\d{10,20})/
+    );
+    const videoId = (match && (match[1] || match[2])) || null;
+    return videoId;
   } catch (err) {
-    console.error('Redirect resolve error:', err.message);
+    console.error("Redirect resolve error:", err.message);
     return null;
   }
 }
+
+// ---- (Opsiyonel) Basit ID çıkarıcı ----
 async function extractVideoIdFromUrl(url) {
-  if (url.includes('vm.tiktok.com') || url.includes('tiktok.com/t/') || url.length < 50) {
-    const redirectId = await url;
-    if (redirectId) {
-      return redirectId;
-    }
-  }
+  if (!url || typeof url !== "string") return null;
 
-  if (!url || typeof url !== 'string') {
-    return null;
-  }
-
-  // TikTok link formatları için regex patterns
   const patterns = [
-    // vm.tiktok.com/xxx veya vm.tiktok.com/ZMxxx
     /(?:vm\.tiktok\.com\/)([\w\d]+)/i,
-    
-    // tiktok.com/@username/video/1234567890123456789
     /(?:tiktok\.com\/)@[\w\d._-]+\/video\/(\d+)/i,
-    
-    // m.tiktok.com/v/1234567890123456789.html
     /(?:m\.tiktok\.com\/v\/)(\d+)(?:\.html)?/i,
-    
-    // www.tiktok.com/@username/video/1234567890123456789
     /(?:www\.tiktok\.com\/)@[\w\d._-]+\/video\/(\d+)/i,
-    
-    // tiktok.com/t/xxx
     /(?:tiktok\.com\/t\/)([\w\d]+)/i,
-    
-    // Sadece video ID (19 haneli sayı)
     /^(\d{19})$/,
-    
-    // Diğer olası formatlar
     /(?:tiktok\.com.*?\/video\/?)(\d+)/i,
     /(?:tiktok\.com.*?v=)(\d+)/i,
     /(?:\/video\/)(\d+)/i
   ];
 
-  // Önce regex ile dene
   for (const pattern of patterns) {
     const match = url.match(pattern);
-    if (match && match[1]) {
-      return match[1];
-    }
+    if (match && match[1]) return match[1];
   }
 
-  // Regex başarısız olursa ve kısa link gibi görünüyorsa redirect takip et
-  
+  if (url.includes("vm.tiktok.com") || url.includes("tiktok.com/t/")) {
+    return await resolveRedirectAndExtractId(url);
+  }
   return null;
 }
 
-// Sleep fonksiyonu
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+// ---- TikTok likes çekme ----
+async function fetchVideoLikes(videoUrlOrId, originalUrl) {
+  const videoIdOrUrl = videoUrlOrId;
 
-async function fetchVideoLikes(videoId, originalUrl) {
-  // Geçersiz video ID kontrolü
-  if (!videoId) {
-    return {
-      url: originalUrl,
-      videoId: null,
-      count: 0,
-      success: false,
-      error: "Invalid TikTok URL format"
-    };
-  }
-
-  // Cache kontrolü
-  const cached = cache.get(videoId);
+  const cached = cache.get(videoIdOrUrl);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    return {
-      ...cached.data,
-      url: originalUrl
-    };
+    return { ...cached.data, url: originalUrl };
   }
 
   let attempts = 0;
@@ -149,73 +103,74 @@ async function fetchVideoLikes(videoId, originalUrl) {
   while (attempts < maxAttempts) {
     const apiKey = getNextApiKey();
     if (!apiKey) {
-      // Tüm API keyler blocked, bekle ya da hata ver
       return {
         url: originalUrl,
-        videoId,
+        videoId: videoIdOrUrl,
         count: 0,
         success: false,
-        error: "All API keys are rate limited (429). Try later.",
+        error: "All API keys are rate limited (429). Try later."
       };
     }
 
     try {
-      const response = await axios.get("https://tokapi-mobile-version.p.rapidapi.com/v1/post", {
-        params: { video_url: videoId },
-        headers: {
-          "x-rapidapi-key": apiKey,
-          "x-rapidapi-host": "tokapi-mobile-version.p.rapidapi.com",
-        },
-      });
-      const likes = response.data?.aweme_detail?.statistics?.digg_count || -1;
+      const response = await axios.get(
+        "https://tokapi-mobile-version.p.rapidapi.com/v1/post",
+        {
+          params: { video_url: videoIdOrUrl },
+          headers: {
+            "x-rapidapi-key": apiKey,
+            "x-rapidapi-host": "tokapi-mobile-version.p.rapidapi.com"
+          },
+          timeout: 20000
+        }
+      );
+
+      const likes = (response.data &&
+        response.data.aweme_detail &&
+        response.data.aweme_detail.statistics &&
+        response.data.aweme_detail.statistics.digg_count) ?? -1;
 
       const result = {
         url: originalUrl,
-        videoId,
+        videoId: videoIdOrUrl,
         count: likes,
-        success: true,
+        success: true
       };
 
-      cache.set(videoId, { 
-        data: {
-          videoId,
-          count: likes,
-          success: true
-        }, 
-        timestamp: Date.now() 
+      cache.set(videoIdOrUrl, {
+        data: { videoId: videoIdOrUrl, count: likes, success: true },
+        timestamp: Date.now()
       });
 
       return result;
     } catch (err) {
-      if (err.response?.status === 429) {
-        // Bu API key rate limit yedi, blockedKeys'e ekle (örneğin 1 saat)
-        blockedKeys.set(apiKey, Date.now() + 60 * 60 * 1000);
+      if (err.response && err.response.status === 429) {
+        blockedKeys.set(apiKey, Date.now() + 60 * 60 * 1000); // 1 saat block
         attempts++;
-        // Diğer API key ile devam etmek için döngü devam edecek
       } else {
-        // Başka bir hata varsa direkt döndür
-        const status = err.response?.status || null;
-        const rawData = err.response?.data || null;
+        const status = (err.response && err.response.status) || null;
+        const rawData = (err.response && err.response.data) || null;
 
         const result = {
           url: originalUrl,
-          videoId,
+          videoId: videoIdOrUrl,
           count: 0,
           success: false,
           status,
           error: err.message,
-          rawData,
+          rawData
         };
 
-        cache.set(videoId, { 
+        cache.set(videoIdOrUrl, {
           data: {
-            videoId,
+            videoId: videoIdOrUrl,
             count: 0,
             success: false,
             error: err.message
-          }, 
-          timestamp: Date.now() 
+          },
+          timestamp: Date.now()
         });
+
         return result;
       }
     }
@@ -223,13 +178,51 @@ async function fetchVideoLikes(videoId, originalUrl) {
 
   return {
     url: originalUrl,
-    videoId,
+    videoId: videoIdOrUrl,
     count: 0,
     success: false,
-    error: "All API keys are rate limited (429). Try later.",
+    error: "All API keys are rate limited (429). Try later."
   };
 }
 
+// ---- Yardımcı: dizi parçalama ----
+function chunk(arr, size) {
+  const out = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
+}
+
+// ---- Rate-limited koşucu ----
+async function runRateLimited(tasks, perMinute = MAX_REQUESTS_PER_MINUTE) {
+  if (tasks.length === 0) return [];
+
+  // <175 ise hepsi paralel (en hızlı)
+  if (tasks.length <= perMinute) {
+    return Promise.all(tasks.map((fn) => fn()));
+  }
+
+  // >=175 ise 175'lik partiler—her partiyi 1 dakikalık pencereyle çalıştır
+  const parts = chunk(tasks, perMinute);
+  const results = [];
+
+  for (let p = 0; p < parts.length; p++) {
+    const part = parts[p];
+    const start = Date.now();
+
+    const partResults = await Promise.all(part.map((fn) => fn()));
+    results.push(...partResults);
+
+    if (p < parts.length - 1) {
+      const elapsed = Date.now() - start;
+      const remaining = WINDOW_MS - elapsed;
+      if (remaining > 0) await sleep(remaining);
+    }
+  }
+
+  return results;
+}
+
+// ---- Route ----
 router.post("/api/tiktok/likes", async (req, res) => {
   const { links } = req.body;
 
@@ -238,21 +231,23 @@ router.post("/api/tiktok/likes", async (req, res) => {
   }
 
   try {
-    const results = [];
+    const tasks = links.map((url) => {
+      // İstersen burada extractVideoIdFromUrl(url) ile ID çıkarabilirsin.
+      const videoIdOrUrl = url; // TokAPI tam URL kabul ediyor
+      return () => fetchVideoLikes(videoIdOrUrl, url);
+    });
 
-    for (let i = 0; i < links.length; i++) {
-      const url = links[i];
-      const videoId = url;
-      const result = await fetchVideoLikes(videoId, url);
-      results.push(result);
-    }
+    const results = await runRateLimited(tasks, MAX_REQUESTS_PER_MINUTE);
 
     res.json({
       data: results,
       total: results.length,
       successful: results.filter((r) => r.success).length,
       failed: results.filter((r) => !r.success).length,
-      totalLikes: results.reduce((sum, r) => sum + (r.likes || 0), 0)
+      totalLikes: results.reduce(
+        (sum, r) => (typeof r.count === "number" ? sum + r.count : sum),
+        0
+      )
     });
   } catch (err) {
     res.status(500).json({ error: "Server error" });
