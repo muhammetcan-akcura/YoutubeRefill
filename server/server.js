@@ -64,7 +64,8 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT1 ;
+const PORT = process.env.PORT1 || 5000;
 app.listen(PORT, () => {
   console.log(`Sunucu ${PORT} portunda çalışıyor`);
 });
+
