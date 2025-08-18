@@ -32,7 +32,29 @@ export function InstagramAnalyticsTab({ serviceType, endpoint, label }: Instagra
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [activeTab, setActiveTab] = useState("refill-main")
   const [copiedTab, setCopiedTab] = useState<string | null>(null)
+const [partialLoadingId, setPartialLoadingId] = useState<number | null>(null)
+const [partialDone, setPartialDone] = useState<Record<number, boolean>>({})
 
+const PARTIAL_API = "https://youtuberefill-1.onrender.com/api/instagram/partial" // backend endpoint'in
+
+async function handlePartial(orderId: number, remains: number) {
+  if (remains <= 0) return
+  try {
+    setPartialLoadingId(orderId)
+    const res = await axios.post(PARTIAL_API, { orderId, remains })
+    if (res.data?.success) {
+      setPartialDone((m) => ({ ...m, [orderId]: true }))
+    } else {
+      console.error("Partial failed:", res.data)
+      alert("Partial isteği başarısız oldu.")
+    }
+  } catch (e: any) {
+    console.error("Partial API error:", e?.response?.data || e?.message)
+    alert("Partial API hatası: " + (e?.response?.data?.error || e?.message))
+  } finally {
+    setPartialLoadingId(null)
+  }
+}
   const handleLinkClick = (link: string) => {
     const url = link.startsWith("http") ? link : `https://www.instagram.com/${link}`
     window.open(url, "_blank", "noopener,noreferrer")
@@ -242,11 +264,11 @@ export function InstagramAnalyticsTab({ serviceType, endpoint, label }: Instagra
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
             <span className="text-gray-400">Start:</span>
-            <span className="text-white font-medium ml-2">{order.start_count.toLocaleString()}</span>
+            <span className="text-white font-medium ml-2">{order.start_count}</span>
           </div>
           <div>
             <span className="text-gray-400">Quantity:</span>
-            <span className="text-emerald-400 font-medium ml-2">+{order.quantity.toLocaleString()}</span>
+            <span className="text-emerald-400 font-medium ml-2">+{order.quantity}</span>
           </div>
           <div>
             <span className="text-gray-400">Current:</span>
@@ -257,7 +279,7 @@ export function InstagramAnalyticsTab({ serviceType, endpoint, label }: Instagra
                     ? "Not found"
                     : instagramInfo.count === -2
                       ? "Disabled"
-                      : instagramInfo.count.toLocaleString()}
+                      : instagramInfo.count}
                 </span>
               ) : (
                 <span className="text-red-400 text-xs ml-2">{instagramInfo.error}</span>
@@ -290,7 +312,7 @@ export function InstagramAnalyticsTab({ serviceType, endpoint, label }: Instagra
         {isBelowTarget && (
           <div className="mt-3 pt-3 border-t border-gray-700">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-400">Missing: {difference.toLocaleString()}</span>
+              <span className="text-gray-400">Missing: {difference}</span>
               <div className="flex items-center gap-2">
                 <div className="w-16 bg-gray-700 rounded-full h-1.5">
                   <div
@@ -421,6 +443,8 @@ export function InstagramAnalyticsTab({ serviceType, endpoint, label }: Instagra
                       <th className="text-left py-4 px-4 text-gray-300 font-semibold text-sm">Quantity</th>
                       <th className="text-left py-4 px-4 text-gray-300 font-semibold text-sm">Current</th>
                       <th className="text-left py-4 px-4 text-gray-300 font-semibold text-sm">Status</th>
+                      <th className="text-left py-4 px-4 text-gray-300 font-semibold text-sm">Partial</th>
+
                     </tr>
                   </thead>
                   <tbody>
@@ -459,10 +483,10 @@ export function InstagramAnalyticsTab({ serviceType, endpoint, label }: Instagra
                             </button>
                           </td>
                           <td className="py-4 px-4">
-                            <span className="text-gray-300 font-medium text-sm">{order.start_count.toLocaleString()}</span>
+                            <span className="text-gray-300 font-medium text-sm">{order.start_count}</span>
                           </td>
                           <td className="py-4 px-4">
-                            <span className="text-emerald-400 font-medium text-sm">+{order.quantity.toLocaleString()}</span>
+                            <span className="text-emerald-400 font-medium text-sm">+{order.quantity}</span>
                           </td>
                           <td className="py-4 px-4">
                             {instagramInfo ? (
@@ -473,11 +497,11 @@ export function InstagramAnalyticsTab({ serviceType, endpoint, label }: Instagra
                                       ? "Not found"
                                       : instagramInfo.count === -2
                                         ? "Disabled"
-                                        : instagramInfo.count.toLocaleString()}
+                                        : instagramInfo.count}
                                   </span>
                                   {isBelowTarget && (
                                     <span className="bg-red-600 text-white text-xs px-2 py-1 rounded-full">
-                                      -{difference.toLocaleString()}
+                                      -{difference}
                                     </span>
                                   )}
                                 </div>
@@ -508,6 +532,30 @@ export function InstagramAnalyticsTab({ serviceType, endpoint, label }: Instagra
                               </div>
                             )}
                           </td>
+                          <td className="py-4 px-4">
+  {isBelowTarget ? (
+    <button
+      onClick={() => handlePartial(order.id, difference)}
+      disabled={partialLoadingId === order.id || partialDone[order.id] || difference <= 0}
+      className={`text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors
+        ${partialDone[order.id]
+          ? "bg-emerald-700 text-white cursor-default"
+          : partialLoadingId === order.id
+          ? "bg-gray-600 text-white cursor-wait"
+          : "bg-amber-600 hover:bg-amber-700 text-white"}`}
+      title={`Send partial: remains=${difference}`}
+    >
+      {partialDone[order.id]
+        ? "Sent ✓"
+        : partialLoadingId === order.id
+        ? "Sending..."
+        : `Partial (${difference})`}
+    </button>
+  ) : (
+    <span className="text-gray-500 text-sm">—</span>
+  )}
+</td>
+
                         </tr>
                       )
                     })}
