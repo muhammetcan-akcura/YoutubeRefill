@@ -35,7 +35,7 @@ export function InstagramAnalyticsTab({ serviceType, endpoint, label }: Instagra
 const [partialLoadingId, setPartialLoadingId] = useState<number | null>(null)
 const [partialDone, setPartialDone] = useState<Record<number, boolean>>({})
 
-const PARTIAL_API = "https://youtuberefill-1.onrender.com/api/instagram/partial" // backend endpoint'in
+const PARTIAL_API = "http://localhost:5000/api/instagram/partial" // backend endpoint'in
 
 async function handlePartial(orderId: number, remains: number) {
   if (remains <= 0) return
@@ -169,7 +169,7 @@ async function handlePartial(orderId: number, remains: number) {
 
       const allResults = []
       for (let i = 0; i < chunks.length; i++) {
-        const response = await axios.post("https://youtuberefill-1.onrender.com/api/orders", {
+        const response = await axios.post("http://localhost:5000/api/orders", {
           ids: chunks[i].join(","),
         })
 
@@ -197,7 +197,7 @@ async function handlePartial(orderId: number, remains: number) {
 
   const fetchinstagramData = async (links: string[]) => {
     try {
-      const response = await axios.post(`https://youtuberefill-1.onrender.com${endpoint}`, {
+      const response = await axios.post(`http://localhost:5000${endpoint}`, {
         links,
       })
       setInstagramData(response.data.data)
@@ -237,6 +237,8 @@ async function handlePartial(orderId: number, remains: number) {
     const isBelowTarget = instagramInfo?.count !== -1 && currentCount < targetCount
     const difference = targetCount - currentCount
     const dropRate = isBelowTarget ? (difference / order.quantity) * 100 : 0
+    console.log(`4994 | ${order.link} | ${difference}`)
+    
 
     return (
       <div className={`bg-gray-800 rounded-lg p-4 border transition-all duration-200 hover:shadow-lg ${

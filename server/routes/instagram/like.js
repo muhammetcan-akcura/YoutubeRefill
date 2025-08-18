@@ -1,11 +1,10 @@
 import express from "express";
 import axios from "axios";
-import fetch from "node-fetch";
 
 const router = express.Router();
 
 const RAPIDAPI_KEYS = [
-  "9f0e55eb4cmshaadaa2017367e34p176ef6jsnc6c8f9065d3b"
+  "cdb2001d49msh2a45d9fef1b322ep1b3a56jsnaf70b1052ca1"
 ];
 const cache = new Map();
 const CACHE_TTL = 10 * 60 * 1000;
@@ -96,7 +95,7 @@ async function fetchVideoLikes(videoId, originalUrl) {
         return result;
       }
 
-      const likes = response.data?.edge_media_preview_comment?.count ?? -1;
+      const likes = response.data?.edge_media_preview_like?.count ?? -1;
 
       const result = {
         url: originalUrl,
@@ -150,7 +149,7 @@ async function fetchVideoLikes(videoId, originalUrl) {
   };
 }
 
-router.post("/api/instagram/comments", async (req, res) => {
+router.post("/api/instagram/likes", async (req, res) => {
   const { links } = req.body;
 
   if (!Array.isArray(links) || links.length === 0) {

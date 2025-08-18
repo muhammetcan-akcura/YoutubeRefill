@@ -15,6 +15,7 @@ import InstagramWiewsRouters from './routes/instagram/views.js'
 import InstagramLikesRouters from './routes/instagram/like.js'
 import InstagramFollowRouters from './routes/instagram/follow.js'
 import InstagramCommentRouters from './routes/instagram/comments.js'
+import InstagramPartialRouters from './routes/instagram/partial.js'
 import ratesRouters from './routes/rates/index.js'
 import siteRoutes from './routes/siteRoutes.js'
 import scrapeRoutes from './routes/scrapeRoutes.js'
@@ -39,7 +40,9 @@ app.use(ratesRouters)
 app.use(siteRoutes)
 app.use(scrapeRoutes)
 app.use(serviceRoutes)
+app.use(InstagramPartialRouters)
 const apikey = process.env.apikey;
+console.log(apikey)
 app.post('/api/orders', async (req, res) => {
   const { ids } = req.body;
 

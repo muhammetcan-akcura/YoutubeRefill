@@ -6,7 +6,7 @@ const router = express.Router();
 
 // RapidAPI anahtarları
 const RAPIDAPI_KEYS = [
-  "9f0e55eb4cmshaadaa2017367e34p176ef6jsnc6c8f9065d3b"
+  "cdb2001d49msh2a45d9fef1b322ep1b3a56jsnaf70b1052ca1"
 ];
 const cache = new Map();
 const CACHE_TTL = 10 * 60 * 1000;

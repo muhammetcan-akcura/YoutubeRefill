@@ -19,15 +19,15 @@ const findServiceById = (id) => {
 
 router.get('/custom-rates', async (req, res) => {
   try {
-    const response = await axios.get(`${process.env.PLATFORM1}/users`, {
+    const response = await axios.get(`${process.env.PLATFORM3}/users`, {
       headers: {
         'Content-Type': 'application/json',
-        'X-Api-Key': process.env.API_KEY_EXCLUSIVE
+        'X-Api-Key': process.env.API_KEY_SOCIAL
       },
       params: {
         limit: 0,
         offset: 0,
-        ids: process.env.RATES_IDS_SMMEXCLUSIVE
+        ids: process.env.RATES_IDS_SOCIALPANEL
       }
     });
 
