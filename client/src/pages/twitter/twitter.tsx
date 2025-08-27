@@ -1,4 +1,3 @@
-
 import { useMemo } from "react"
 import axios from "axios"
 import type React from "react"
@@ -22,6 +21,29 @@ const App: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([])
   const [twitterData, setTwitterData] = useState<TwitterData[]>([])
   const [loading, setLoading] = useState(false)
+  const [partialLoadingId, setPartialLoadingId] = useState<number | null>(null)
+  const [partialDone, setPartialDone] = useState<Record<number, boolean>>({})
+
+  const PARTIAL_API = "https://youtuberefill-1.onrender.com/api/twitter/partial"
+
+  async function handlePartial(orderId: number, remains: number) {
+    if (remains <= 0) return
+    try {
+      setPartialLoadingId(orderId)
+      const res = await axios.post(PARTIAL_API, { orderId, remains })
+      if (res.data?.success) {
+        setPartialDone((m) => ({ ...m, [orderId]: true }))
+      } else {
+        console.error("Partial failed:", res.data)
+        alert("Partial isteği başarısız oldu.")
+      }
+    } catch (e: any) {
+      console.error("Partial API error:", e?.response?.data || e?.message)
+      alert("Partial API hatası: " + (e?.response?.data?.error || e?.message))
+    } finally {
+      setPartialLoadingId(null)
+    }
+  }
 
   const fetchOrdersFromApi = async (ids:any) => {
   setLoading(true);
@@ -347,6 +369,11 @@ const App: React.FC = () => {
                           Drop Rate
                         </div>
                       </th>
+                      <th className="text-left py-4 px-4 text-gray-300 font-semibold">
+                        <div className="flex items-center gap-2">
+                          Partial
+                        </div>
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -436,6 +463,29 @@ const App: React.FC = () => {
                               </div>
                             ) : (
                               <span className="text-green-400 font-semibold">✓ Target Met</span>
+                            )}
+                          </td>
+                          <td className="py-4 px-4">
+                            {isBelowTarget ? (
+                              <button
+                                onClick={() => handlePartial(order.id, difference)}
+                                disabled={partialLoadingId === order.id || partialDone[order.id] || difference <= 0}
+                                className={`text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors
+                                  ${partialDone[order.id]
+                                    ? "bg-emerald-700 text-white cursor-default"
+                                    : partialLoadingId === order.id
+                                    ? "bg-gray-600 text-white cursor-wait"
+                                    : "bg-amber-600 hover:bg-amber-700 text-white"}`}
+                                title={`Send partial: remains=${difference}`}
+                              >
+                                {partialDone[order.id]
+                                  ? "Sent ✓"
+                                  : partialLoadingId === order.id
+                                  ? "Sending..."
+                                  : `Partial (${difference})`}
+                              </button>
+                            ) : (
+                              <span className="text-gray-500 text-sm">—</span>
                             )}
                           </td>
                         </tr>

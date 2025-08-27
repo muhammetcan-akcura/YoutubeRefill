@@ -361,7 +361,7 @@ async function fetchUserData(username) {
 
       const userData = response.data?.result?.data?.user?.result;
       const followersCount = userData?.legacy?.followers_count || null;
-
+console.log(followersCount,"followersCount")
       const result = {
         username,
         followers_count: followersCount,
