@@ -8,6 +8,8 @@ interface Order {
   link: string
   start_count: number
   quantity: number
+  partial?: boolean | number
+  status: string
 }
 
 interface TwitterData {
@@ -44,7 +46,10 @@ const App: React.FC = () => {
       setPartialLoadingId(null)
     }
   }
-
+ const handleLinkClick = (link: string) => {
+    const url = link.startsWith("http") ? link : `https://www.x.com/${link}`
+    window.open(url, "_blank", "noopener,noreferrer")
+  }
   const fetchOrdersFromApi = async (ids:any) => {
   setLoading(true);
 
@@ -381,6 +386,7 @@ const App: React.FC = () => {
                       const username = extractUsernameFromLink(order.link)
                       const twitterInfo :any = twitterData.find((t) => t.username === username)
                       const targetCount = order.quantity + order.start_count
+                      const status = order.status
                       const currentCount = twitterInfo?.followers_count || 0
                       const isBelowTarget = twitterInfo?.followers_count !== null && currentCount < targetCount
                       const difference = targetCount - currentCount
@@ -390,7 +396,11 @@ const App: React.FC = () => {
                         <tr
                           key={order.id}
                           className={`border-b border-gray-700 transition-colors duration-200 ${
-                            isBelowTarget ? dropRate >= 100 ? "bg-purple-950 hover:bg-purple-800":  "bg-red-900/30 hover:bg-red-900/40" : "hover:bg-gray-700/50"
+                             isBelowTarget
+          ? dropRate >= 100
+            ? "border-amber-500/50 bg-amber-900/20"
+            : "border-red-500/50 bg-red-900/20"
+          : "border-gray-700 hover:border-gray-600"
                           }`}
                         >
                           <td className="py-4 px-4">
@@ -399,9 +409,20 @@ const App: React.FC = () => {
                             </span>
                           </td>
                           <td className="py-4 px-4">
-                            <div className="max-w-xs truncate text-blue-400 hover:text-blue-300 transition-colors">
-                              {order.link}
-                            </div>
+                            <button
+                              onClick={() => handleLinkClick(order.link)}
+                              className="max-w-xs truncate text-blue-400 hover:text-blue-300 transition-colors cursor-pointer underline hover:no-underline flex items-center gap-1"
+                            >
+                              <span className="truncate">{order.link}</span>
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                />
+                              </svg>
+                            </button>
                           </td>
                           <td className="py-4 px-4">
                             <span className="text-gray-300 font-medium">{order.start_count}</span>
@@ -469,7 +490,7 @@ const App: React.FC = () => {
                             {isBelowTarget ? (
                               <button
                                 onClick={() => handlePartial(order.id, difference)}
-                                disabled={partialLoadingId === order.id || partialDone[order.id] || difference <= 0}
+                                disabled={partialLoadingId === order.id || partialDone[order.id] || difference <= 0 || status === "partial"}
                                 className={`text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors
                                   ${partialDone[order.id]
                                     ? "bg-emerald-700 text-white cursor-default"

@@ -359,8 +359,9 @@ async function fetchUserData(username) {
         },
       });
 
-      const userData = response.data?.result?.data?.user?.result;
-      const followersCount = userData?.legacy?.followers_count || null;
+      const userData = response.data
+    
+      const followersCount = userData?.followers_count || null;
 console.log(followersCount,"followersCount")
       const result = {
         username,
