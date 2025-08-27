@@ -287,18 +287,7 @@ const router = express.Router();
 
 // RapidAPI anahtarları (birden fazla anahtar kullanarak rate limit'i aşabilirsin)
 const RAPIDAPI_KEYS = [
-  "e22f506a97msh3557064841f9b75p1a547cjsna4d8b79a7455",
-  "c96ea733acmshfa7985ac84b61ffp149b45jsn85e122d95c35",
-  "cdb2001d49msh2a45d9fef1b322ep1b3a56jsnaf70b1052ca1",
-  "9f0e55eb4cmshaadaa2017367e34p176ef6jsnc6c8f9065d3b",
-  "4276ce9259mshe3bee36fb07fc77p1a5bd2jsn363b5e55dc4b",
-  "8ea128e275msh83991b2c5fbda6bp1e5c7cjsn932305c346a4",
-  "de9d44aa0amshd1cfcebd0f680e0p18d66cjsnce758f436f87",
-  "fa9be3d3a6mshe8c61a1e418fbefp1de337jsn1a161d489ba4",
-  "ee4b08c60dmshfe5a8787d5a7770p1446b1jsn66f78f7ffe18",
-  "c864d66a79msh5084e58db113d78p12693bjsn3abb1880ae90",
-  "c82405414fmsh9fc8e1f12bb51bfp1baf54jsn25cfc31a1f28",
-  "b5f8ac0136mshb1d9473efea5393p1a8fbajsn9c849b6ca3a8"
+"cdb2001d49msh2a45d9fef1b322ep1b3a56jsnaf70b1052ca1"
   
 ];
 const cache = new Map();
@@ -362,11 +351,11 @@ async function fetchUserData(username) {
     }
 
     try {
-      const response = await axios.get("https://twitter241.p.rapidapi.com/user", {
-        params: { username: username },
+      const response = await axios.get("https://twitter-api45.p.rapidapi.com/followers.php", {
+        params: { screenname: username },
         headers: {
           "x-rapidapi-key": apiKey,
-          "x-rapidapi-host": "twitter241.p.rapidapi.com",
+          "x-rapidapi-host": "twitter-api45.p.rapidapi.com",
         },
       });
 
