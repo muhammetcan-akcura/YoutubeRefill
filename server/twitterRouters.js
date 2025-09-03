@@ -1,294 +1,10 @@
-// import express from "express";
-// import axios from "axios";
-// import pLimit from "p-limit";
-
-// const router = express.Router();
-
-// const BEARER_TOKENS = [
-// "AAAAAAAAAAAAAAAAAAAAAAIw2AEAAAAAsktHT3GByvweOQcBXi1n4iF4IR4%3DM906ehVOhnMYAiKpYma0SzbXt3nIcYv5GrDGwDfz8Au246NsiZ",
-// "AAAAAAAAAAAAAAAAAAAAAKwx2AEAAAAAOCP29MpfWHgvYMVbC4cnckNwSpQ%3DQwIfWQVjNHC5AK9dB4KbIwb9P5Flhl9fTR5QWIU8GO0JegBCUu",
-// "AAAAAAAAAAAAAAAAAAAAAL0x2AEAAAAAcHF8KsShjCsZNj%2Fx3JQZ70cJiSU%3DAlVRpWiMIUFSYajiLe29ZkepCl0veRjsVPj7M9auhoq1qjgT69"
-// ];
-
-// // Basit in-memory cache (RAM’de tutuluyor)
-// const cache = new Map();
-
-// // Cache süresi (10 dakika)
-// const CACHE_TTL = 10 * 60 * 1000;
-
-// // Token rotasyonu için index
-// let currentTokenIndex = 0;
-
-// // Token seçici (round-robin)
-// function getNextToken() {
-//   const token = BEARER_TOKENS[currentTokenIndex];
-//   currentTokenIndex = (currentTokenIndex + 1) % BEARER_TOKENS.length;
-//   return token;
-// }
-
-// // İstek limiti: Aynı anda max 5 istek
-// const limit = pLimit(5);
-
-// async function fetchUserData(username) {
-//   // Cache kontrolü
-//   const cached = cache.get(username);
-//   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-//     return cached.data;
-//   }
-
-//   const token = getNextToken();
-
-//   try {
-//     const response = await axios.get(
-//       `https://api.twitter.com/2/users/by/username/${username}`,
-//       {
-//         headers: {
-//           Authorization: `Bearer ${token}`,
-//         },
-//         params: {
-//           "user.fields": "public_metrics",
-//         },
-//       }
-//     );
-
-//     const user = response.data.data;
-
-//     const result = {
-//       username,
-//       followers_count: user?.public_metrics?.followers_count ?? null,
-//       success: true,
-//     };
-
-//     // Cache’e kaydet
-//     cache.set(username, { data: result, timestamp: Date.now() });
-
-//     return result;
-//   } catch (err) {
-//     // Hata detaylarını yakala
-//     const status = err.response?.status || null;
-//     const rawData = err.response?.data || null;
-
-//     const result = {
-//       username,
-//       followers_count: null,
-//       success: false,
-//       status,
-//       error: err.message,
-//       rawData,
-//     };
-
-//     // Cache’e kaydet (hatalı sonuç da cache’de tutulabilir)
-//     cache.set(username, { data: result, timestamp: Date.now() });
-
-//     return result;
-//   }
-// }
-
-// router.post("/api/twitter", async (req, res) => {
-//   const { usernames } = req.body;
-
-//   if (!Array.isArray(usernames) || usernames.length === 0) {
-//     return res.status(400).json({ error: "No usernames provided" });
-//   }
-
-//   if (usernames.length > 100) {
-//     return res.status(400).json({ error: "Maximum 100 usernames allowed" });
-//   }
-
-//   try {
-//     const results = await Promise.all(
-//       usernames.map((username) => limit(() => fetchUserData(username)))
-//     );
-
-//     res.json({
-//       data: results,
-//       total: results.length,
-//       successful: results.filter((r) => r.success).length,
-//       failed: results.filter((r) => !r.success).length,
-//     });
-//   } catch (err) {
-//     console.error("Server error:", err);
-//     res.status(500).json({ error: "Server error" });
-//   }
-// });
-
-// export default router;
-
-
-// import express from "express";
-// import pLimit from "p-limit";
-// import puppeteer from "puppeteer";
-
-// const router = express.Router();
-
-// const limit = pLimit(1); // concurrency 1, sırayla yapıyoruz
-
-// const cache = new Map();
-// const CACHE_TTL = 10 * 60 * 1000; // 10 dakika
-
-// let browser = null;
-// async function getBrowser() {
-//   if (!browser) {
-//     browser = await puppeteer.launch({
-//       headless: false,
-//       args: ['--no-sandbox', '--disable-setuid-sandbox'],
-//     });
-//   }
-//   return browser;
-// }
-
-// // 6-12 saniye arası random delay
-// function delay(min = 6000, max = 12000) {
-//   return new Promise((resolve) => setTimeout(resolve, Math.random() * (max - min) + min));
-// }
-
-// async function autoScroll(page) {
-//   await page.evaluate(async () => {
-//     await new Promise((resolve) => {
-//       let totalHeight = 0;
-//       const distance = 100;
-//       const timer = setInterval(() => {
-//         const scrollHeight = document.body.scrollHeight;
-//         window.scrollBy(0, distance);
-//         totalHeight += distance;
-
-//         if (totalHeight >= scrollHeight) {
-//           clearInterval(timer);
-//           resolve();
-//         }
-//       }, 300);
-//     });
-//   });
-// }
-
-// async function fetchUserData(username) {
-//   const cached = cache.get(username);
-//   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-//     return cached.data;
-//   }
-
-//   try {
-//     const browser = await getBrowser();
-//     const page = await browser.newPage();
-
-//     await page.setUserAgent(
-//       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
-//     );
-
-//     const url = `https://twitter.com/${username}`;
-//     await page.goto(url, { waitUntil: "networkidle2", timeout: 20000 });
-
-//     await delay(2000, 4000);
-
-//     await autoScroll(page);
-
-//     await delay(2000, 4000);
-
-//     // Kullanıcı bulunamadı kontrolü
-//     const isNotFound = await page.$('div[data-testid="emptyState"]') !== null;
-//     if (isNotFound) {
-//       await page.close();
-//       const result = {
-//         username,
-//         followers_count: null,
-//         success: false,
-//         error: "User not found or suspended",
-//       };
-//       cache.set(username, { data: result, timestamp: Date.now() });
-//       return result;
-//     }
-
-//     const followersSelector = `a[href="/${username}/followers"] > span > span`;
-//     await page.waitForSelector(followersSelector, { timeout: 8000 });
-
-//     const followersText = await page.$eval(followersSelector, (el) => el.textContent);
-//     const followers_count = parseFollowersCount(followersText);
-
-//     await page.close();
-
-//     const result = {
-//       username,
-//       followers_count,
-//       success: true,
-//     };
-
-//     cache.set(username, { data: result, timestamp: Date.now() });
-//     return result;
-//   } catch (err) {
-//     const result = {
-//       username,
-//       followers_count: null,
-//       success: false,
-//       error: err.message,
-//     };
-//     cache.set(username, { data: result, timestamp: Date.now() });
-//     return result;
-//   } finally {
-//     // Her istekten sonra 6-12 saniye bekle, rate limit kontrolü için
-//     await delay();
-//   }
-// }
-
-// function parseFollowersCount(text) {
-//   if (!text) return null;
-//   text = text.replace(/,/g, '').trim();
-
-//   const multipliers = { K: 1000, M: 1000000, B: 1000000000 };
-//   const lastChar = text.slice(-1).toUpperCase();
-
-//   if (multipliers[lastChar]) {
-//     const num = parseFloat(text.slice(0, -1));
-//     if (isNaN(num)) return null;
-//     return Math.round(num * multipliers[lastChar]);
-//   }
-
-//   const num = parseInt(text, 10);
-//   if (isNaN(num)) return null;
-//   return num;
-// }
-
-// router.post("/api/twitter", async (req, res) => {
-//   const { usernames } = req.body;
-
-//   if (!Array.isArray(usernames) || usernames.length === 0) {
-//     return res.status(400).json({ error: "No usernames provided" });
-//   }
-
-//   if (usernames.length > 100) {
-//     return res.status(400).json({ error: "Maximum 100 usernames allowed" });
-//   }
-
-//   try {
-//     const results = [];
-//     for (const username of usernames) {
-//       // concurrency 1 + delay ile zaten hız limiti ayarlanıyor
-//       const result = await fetchUserData(username);
-//       results.push(result);
-//     }
-
-//     res.json({
-//       data: results,
-//       total: results.length,
-//       successful: results.filter((r) => r.success).length,
-//       failed: results.filter((r) => !r.success).length,
-//     });
-//   } catch (err) {
-//     console.error("Server error:", err);
-//     res.status(500).json({ error: "Server error" });
-//   }
-// });
-
-// export default router;
-
 import express from "express";
 import axios from "axios";
 
 const router = express.Router();
 
-// RapidAPI anahtarları (birden fazla anahtar kullanarak rate limit'i aşabilirsin)
 const RAPIDAPI_KEYS = [
-"cdb2001d49msh2a45d9fef1b322ep1b3a56jsnaf70b1052ca1"
-  
+  "cdb2001d49msh2a45d9fef1b322ep1b3a56jsnaf70b1052ca1"
 ];
 const cache = new Map();
 
@@ -306,10 +22,8 @@ function isKeyBlocked(key) {
   return true;
 }
 
-// API key rotasyonu için index
 let currentKeyIndex = 0;
 
-// API key seçici (round-robin, blockedKeys'i atlar)
 function getNextApiKey() {
   const len = RAPIDAPI_KEYS.length;
   for (let i = 0; i < len; i++) {
@@ -319,17 +33,16 @@ function getNextApiKey() {
       return key;
     }
   }
-  // Eğer tüm keyler blocked ise null döner
+
   return null;
 }
 
-// Sleep fonksiyonu
+
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function fetchUserData(username) {
-  // Cache kontrolü
   const cached = cache.get(username);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     return cached.data;
@@ -341,7 +54,6 @@ async function fetchUserData(username) {
   while (attempts < maxAttempts) {
     const apiKey = getNextApiKey();
     if (!apiKey) {
-      // Tüm API keyler blocked, bekle ya da hata ver
       return {
         username,
         followers_count: null,
@@ -351,18 +63,17 @@ async function fetchUserData(username) {
     }
 
     try {
-      const response = await axios.get("https://twitter-api45.p.rapidapi.com/followers.php", {
-        params: { screenname: username },
+      const response = await axios.get("https://twitter241.p.rapidapi.com/user", {
+        params: { username: username },
         headers: {
           "x-rapidapi-key": apiKey,
-          "x-rapidapi-host": "twitter-api45.p.rapidapi.com",
+          "x-rapidapi-host": "twitter241.p.rapidapi.com",
         },
       });
 
-      const userData = response.data
-    
-      const followersCount = userData?.followers_count || null;
-console.log(followersCount,"followersCount")
+      const userData = response.data?.result?.data?.user?.result;
+      const followersCount = userData?.legacy?.followers_count || null;
+
       const result = {
         username,
         followers_count: followersCount,
