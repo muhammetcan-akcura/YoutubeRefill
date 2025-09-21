@@ -46,70 +46,70 @@ const App: React.FC = () => {
       setPartialLoadingId(null)
     }
   }
- const handleLinkClick = (link: string) => {
+  const handleLinkClick = (link: string) => {
     const url = link.startsWith("http") ? link : `https://www.x.com/${link}`
     window.open(url, "_blank", "noopener,noreferrer")
   }
-  const fetchOrdersFromApi = async (ids:any) => {
-  setLoading(true);
+  const fetchOrdersFromApi = async (ids: any) => {
+    setLoading(true);
 
-  try {
-    const formattedIdsArray = ids
-      .trim()
-      .split(',')
-      .map((id:any) => id.trim())
-      .filter((id:any) => id !== '');
+    try {
+      const formattedIdsArray = ids
+        .trim()
+        .split(',')
+        .map((id: any) => id.trim())
+        .filter((id: any) => id !== '');
 
-    if (formattedIdsArray.length === 0) {
-      throw new Error('No valid IDs found');
-    }
-
-    const chunkSize = 100;
-    const chunks = [];
-
-    // ID'leri 100'erli gruplara ayır
-    for (let i = 0; i < formattedIdsArray.length; i += chunkSize) {
-      chunks.push(formattedIdsArray.slice(i, i + chunkSize));
-    }
-
-    const allResults = [];
-
-    for (let i = 0; i < chunks.length; i++) {
-      const response = await axios.post("https://youtuberefill-1.onrender.com/api/orders", {
-        ids: chunks[i].join(","),
-      });
-
-      if (!response.data || !Array.isArray(response?.data?.data?.list)) {
-        throw new Error(`API returned invalid data for chunk ${i + 1}`);
+      if (formattedIdsArray.length === 0) {
+        throw new Error('No valid IDs found');
       }
 
-      const chunkResults = response.data.data.list;
+      const chunkSize = 100;
+      const chunks = [];
 
-      // Doğru indexlerde ekle
-      for (let j = 0; j < chunkResults.length; j++) {
-        const resultIndex = i * chunkSize + j;
-        allResults[resultIndex] = chunkResults[j];
+      // ID'leri 100'erli gruplara ayır
+      for (let i = 0; i < formattedIdsArray.length; i += chunkSize) {
+        chunks.push(formattedIdsArray.slice(i, i + chunkSize));
       }
 
-      // Saniyede 1 istek limiti istiyorsan (opsiyonel)
-      // await new Promise(resolve => setTimeout(resolve, 1000));
+      const allResults = [];
+
+      for (let i = 0; i < chunks.length; i++) {
+        const response = await axios.post("https://youtuberefill-1.onrender.com/api/orders", {
+          ids: chunks[i].join(","),
+        });
+
+        if (!response.data || !Array.isArray(response?.data?.data?.list)) {
+          throw new Error(`API returned invalid data for chunk ${i + 1}`);
+        }
+
+        const chunkResults = response.data.data.list;
+
+        // Doğru indexlerde ekle
+        for (let j = 0; j < chunkResults.length; j++) {
+          const resultIndex = i * chunkSize + j;
+          allResults[resultIndex] = chunkResults[j];
+        }
+
+        // Saniyede 1 istek limiti istiyorsan (opsiyonel)
+        // await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+
+      setOrders(allResults);
+      return allResults;
+
+    } catch (err) {
+      console.error("Order fetch error", err);
+      return [];
+    } finally {
+      setLoading(false);
     }
-
-    setOrders(allResults);
-    return allResults;
-
-  } catch (err) {
-    console.error("Order fetch error", err);
-    return [];
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
   const extractUsernameFromLink = (link: string): string | null => {
     try {
-     const url = new URL(link.startsWith("http") ? link : `https://${link}`)
+      const url = new URL(link.startsWith("http") ? link : `https://${link}`)
       if (url.hostname.includes("x.com") || url.hostname.includes("twitter.com")) {
         const parts = url.pathname.split("/").filter(Boolean)
         if (parts.length > 0) {
@@ -141,7 +141,7 @@ const App: React.FC = () => {
 
   const handleFetch = async () => {
     const orderData = await fetchOrdersFromApi(ids)
-    const usernames :any= Array.from(
+    const usernames: any = Array.from(
       new Set(
         orderData
           .map((order: any) => extractUsernameFromLink(order.link))
@@ -152,34 +152,34 @@ const App: React.FC = () => {
   }
 
   const { totalBelowTarget, averageDropRate } = useMemo(() => {
-  const belowTargetOrders = orders.filter(order => {
-    const username = extractUsernameFromLink(order.link)
-    const twitterInfo = twitterData.find((t) => t.username === username)
-    const targetCount = order.quantity + order.start_count
-    const currentCount = twitterInfo?.followers_count || 0
-    return currentCount < targetCount * 0.80 && twitterInfo?.followers_count !== null
-  })
-
-  console.log(belowTargetOrders.map((item:any)=>item.id).join(","))
-
-  const dropRates = belowTargetOrders
-    .map(order => {
+    const belowTargetOrders = orders.filter(order => {
       const username = extractUsernameFromLink(order.link)
       const twitterInfo = twitterData.find((t) => t.username === username)
       const targetCount = order.quantity + order.start_count
       const currentCount = twitterInfo?.followers_count || 0
-      const difference = targetCount - currentCount
-      const dropRate = (difference / order.quantity) * 100
-      return dropRate
+      return currentCount < targetCount * 0.80 && twitterInfo?.followers_count !== null
     })
-    .filter(rate => rate <= 120) // %130 üstündekileri hesaptan çıkar
-    .map(rate => Math.min(rate, 100)) // %129 ve altını %100'e kadar sınırla
 
-  const totalBelowTarget = belowTargetOrders.length
-  const averageDropRate = dropRates.length > 0 ? dropRates.reduce((sum, rate) => sum + rate, 0) / dropRates.length : 0
+    console.log(belowTargetOrders.map((item: any) => item.id).join(","))
 
-  return { totalBelowTarget, averageDropRate }
-}, [orders, twitterData])
+    const dropRates = belowTargetOrders
+      .map(order => {
+        const username = extractUsernameFromLink(order.link)
+        const twitterInfo = twitterData.find((t) => t.username === username)
+        const targetCount = order.quantity + order.start_count
+        const currentCount = twitterInfo?.followers_count || 0
+        const difference = targetCount - currentCount
+        const dropRate = (difference / order.quantity) * 100
+        return dropRate
+      })
+      .filter(rate => rate <= 120) // %130 üstündekileri hesaptan çıkar
+      .map(rate => Math.min(rate, 100)) // %129 ve altını %100'e kadar sınırla
+
+    const totalBelowTarget = belowTargetOrders.length
+    const averageDropRate = dropRates.length > 0 ? dropRates.reduce((sum, rate) => sum + rate, 0) / dropRates.length : 0
+
+    return { totalBelowTarget, averageDropRate }
+  }, [orders, twitterData])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white p-6">
@@ -384,7 +384,7 @@ const App: React.FC = () => {
                   <tbody>
                     {orders.map((order) => {
                       const username = extractUsernameFromLink(order.link)
-                      const twitterInfo :any = twitterData.find((t) => t.username === username)
+                      const twitterInfo: any = twitterData.find((t) => t.username === username)
                       const targetCount = order.quantity + order.start_count
                       const status = order.status
                       const currentCount = twitterInfo?.followers_count || 0
@@ -395,13 +395,12 @@ const App: React.FC = () => {
                       return (
                         <tr
                           key={order.id}
-                          className={`border-b border-gray-700 transition-colors duration-200 ${
-                             isBelowTarget
-          ? dropRate >= 100
-            ? "border-amber-500/50 bg-amber-900/20"
-            : "border-red-500/50 bg-red-900/20"
-          : "border-gray-700 hover:border-gray-600"
-                          }`}
+                          className={`border-b border-gray-700 transition-colors duration-200 ${isBelowTarget
+                              ? dropRate >= 100
+                                ? "border-amber-500/50 bg-amber-900/20"
+                                : "border-red-500/50 bg-red-900/20"
+                              : "border-gray-700 hover:border-gray-600"
+                            }`}
                         >
                           <td className="py-4 px-4">
                             <span className="bg-blue-600 text-white text-sm font-medium px-3 py-1 rounded-full">
@@ -476,7 +475,7 @@ const App: React.FC = () => {
                               <div className="flex items-center gap-2">
                                 <span className="text-red-400 font-semibold">{dropRate.toFixed(1)}%</span>
                                 <div className="w-20 bg-gray-700 rounded-full h-2">
-                                  <div 
+                                  <div
                                     className="bg-red-500 h-2 rounded-full transition-all duration-300"
                                     style={{ width: `${Math.min(dropRate, 100)}%` }}
                                   ></div>
@@ -487,23 +486,23 @@ const App: React.FC = () => {
                             )}
                           </td>
                           <td className="py-4 px-4">
-                            {isBelowTarget ? (
+                            {isBelowTarget && dropRate < 100 ? (
                               <button
                                 onClick={() => handlePartial(order.id, difference)}
-                                disabled={partialLoadingId === order.id || partialDone[order.id] || difference <= 0 || status === "partial"}
+                                disabled={partialLoadingId === order.id || partialDone[order.id] || difference <= 0 || status !== "completed"}
                                 className={`text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors
-                                  ${partialDone[order.id]
+                                  ${status !== "completed" ? "bg-red-700 text-white cursor-default" : partialDone[order.id]
                                     ? "bg-emerald-700 text-white cursor-default"
                                     : partialLoadingId === order.id
-                                    ? "bg-gray-600 text-white cursor-wait"
-                                    : "bg-amber-600 hover:bg-amber-700 text-white"}`}
+                                      ? "bg-gray-600 text-white cursor-wait"
+                                      : "bg-amber-600 hover:bg-amber-700 text-white"}`}
                                 title={`Send partial: remains=${difference}`}
                               >
-                                {partialDone[order.id]
+                                {status !== "completed" ? "Already Partial" : partialDone[order.id]
                                   ? "Sent ✓"
                                   : partialLoadingId === order.id
-                                  ? "Sending..."
-                                  : `Partial (${difference})`}
+                                    ? "Sending..."
+                                    : `Partial (${difference})`}
                               </button>
                             ) : (
                               <span className="text-gray-500 text-sm">—</span>
