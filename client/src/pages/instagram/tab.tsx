@@ -10,6 +10,7 @@ interface Order {
   start_count: number
   quantity: number
   external_id: number
+  status: string
 }
 
 interface InstagramData {
@@ -32,29 +33,29 @@ export function InstagramAnalyticsTab({ serviceType, endpoint, label }: Instagra
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [activeTab, setActiveTab] = useState("refill-main")
   const [copiedTab, setCopiedTab] = useState<string | null>(null)
-const [partialLoadingId, setPartialLoadingId] = useState<number | null>(null)
-const [partialDone, setPartialDone] = useState<Record<number, boolean>>({})
+  const [partialLoadingId, setPartialLoadingId] = useState<number | null>(null)
+  const [partialDone, setPartialDone] = useState<Record<number, boolean>>({})
 
-const PARTIAL_API = "https://youtuberefill-1.onrender.com/api/instagram/partial" // backend endpoint'in
+  const PARTIAL_API = "https://youtuberefill-1.onrender.com/api/instagram/partial" // backend endpoint'in
 
-async function handlePartial(orderId: number, remains: number) {
-  if (remains <= 0) return
-  try {
-    setPartialLoadingId(orderId)
-    const res = await axios.post(PARTIAL_API, { orderId, remains })
-    if (res.data?.success) {
-      setPartialDone((m) => ({ ...m, [orderId]: true }))
-    } else {
-      console.error("Partial failed:", res.data)
-      alert("Partial isteği başarısız oldu.")
+  async function handlePartial(orderId: number, remains: number) {
+    if (remains <= 0) return
+    try {
+      setPartialLoadingId(orderId)
+      const res = await axios.post(PARTIAL_API, { orderId, remains })
+      if (res.data?.success) {
+        setPartialDone((m) => ({ ...m, [orderId]: true }))
+      } else {
+        console.error("Partial failed:", res.data)
+        alert("Partial isteği başarısız oldu.")
+      }
+    } catch (e: any) {
+      console.error("Partial API error:", e?.response?.data || e?.message)
+      alert("Partial API hatası: " + (e?.response?.data?.error || e?.message))
+    } finally {
+      setPartialLoadingId(null)
     }
-  } catch (e: any) {
-    console.error("Partial API error:", e?.response?.data || e?.message)
-    alert("Partial API hatası: " + (e?.response?.data?.error || e?.message))
-  } finally {
-    setPartialLoadingId(null)
   }
-}
   const handleLinkClick = (link: string) => {
     const url = link.startsWith("http") ? link : `https://www.instagram.com/${link}`
     window.open(url, "_blank", "noopener,noreferrer")
@@ -79,8 +80,10 @@ async function handlePartial(orderId: number, remains: number) {
       missing: number
       external_id: number
       currentCount: number
+      start_count: number
     }[] = []
     const aboveTargetIds: number[] = []
+    const bellowStartCountIds: number[] = []
 
     orders.forEach((order) => {
       const username = order.link
@@ -90,7 +93,16 @@ async function handlePartial(orderId: number, remains: number) {
       const targetCount = order.quantity + order.start_count
       const currentCount = instagramInfo.count
 
-      if (currentCount < targetCount) {
+      // 🔥 BAŞLANGIÇ SAYISININ ALTINDA OLANLAR (Bu ayrı kategori)
+      if (currentCount < order.start_count) {
+        bellowStartCountIds.push(order.id)
+      }
+      // 🎯 TARGET'A ULAŞANLAR (Başarılı olanlar)  
+      else if (currentCount >= targetCount) {
+        aboveTargetIds.push(order.id)
+      }
+      // 📉 TARGET'IN ALTINDA OLANLAR (Refill gerekli)
+      else if (currentCount < targetCount) {
         const missing = targetCount - currentCount
         belowTargetData.push({
           currentCount: currentCount,
@@ -98,52 +110,78 @@ async function handlePartial(orderId: number, remains: number) {
           link: order.link,
           missing,
           external_id: order.external_id,
+          start_count: order.start_count
         })
-      } else {
-        aboveTargetIds.push(order.id)
       }
     })
 
+    console.log("Below start count IDs:", bellowStartCountIds)
+    console.log("Below target data:", belowTargetData)
+    console.log("Above target IDs:", aboveTargetIds)
+
+    // Toplam eksik maliyet
     const missingtotal =
       Number(
         belowTargetData.filter((item) => item.currentCount !== -1).reduce((total, item) => total + item.missing, 0),
       ) * 0.00045
 
-    const aboveContent = aboveTargetIds.join(",") || "x"
-    const notFound =
+    // Başarılı olanlar (target'a ulaşanlar)
+    const successMainIds = aboveTargetIds.join(",") || "x"
+
+    // Bulunamayanlar (count = -1 olanlar)
+    const notFoundIds =
       belowTargetData
         .filter((item) => item.currentCount === -1)
         .map((d) => d.id)
         .join(",") || "x"
-    const idsLine =
+
+    // Başlangıç sayısının altında olanlar (Bu senin yeni eklediğin)
+    const bellowStartCountIdsStr = bellowStartCountIds.join(",") || "x"
+
+    // Target altında olanların ID'leri (refill gerekli)
+    const refillMainIds =
       belowTargetData
         .filter((item) => item.currentCount !== -1)
         .map((d) => d.id)
         .join(",") || "x"
-    const refillExternal =
+
+    // Provider ID'leri (refill için)
+    const refillProviderIds =
       belowTargetData
         .filter((item) => item.currentCount !== -1)
         .map((d) => d.external_id)
         .join(",") || "x"
-    const refillLines =
+
+    // Refill formatı
+    const refillProviderFormat =
       belowTargetData
         .filter((item) => item.currentCount !== -1)
         .map((d) => `${d.external_id} refill(${d.currentCount}) => missing amount(${d.missing})`)
         .join("\n") || "x"
-    const detailLines =
+
+    // Mass order formatı
+    const refillMassOrderFormat =
       belowTargetData
         .filter((item) => item.currentCount !== -1)
-        .map((d) => `3 | ${d.link} | ${d.missing}`)
+        .map((d) => `197 | ${d.link} | ${d.missing}`)
         .join("\n") || "x"
 
     return {
-      refillMainIds: idsLine,
-      refillProviderIds: refillExternal,
-      refillProviderFormat: refillLines,
-      refillMassOrderFormat: detailLines,
+      // Target altında olanlar (refill gerekli)
+      refillMainIds,
+      refillProviderIds,
+      refillProviderFormat,
+      refillMassOrderFormat,
       missingTotal: missingtotal,
-      notFoundIds: notFound,
-      successMainIds: aboveContent,
+
+      // Bulunamayanlar
+      notFoundIds,
+
+      // Başarılı olanlar (target'a ulaşanlar)
+      successMainIds,
+
+      // 🆕 YENİ: Başlangıç sayısının altında olanlar
+      bellowStartCountIds: bellowStartCountIdsStr,
     }
   }
 
@@ -227,6 +265,7 @@ async function handlePartial(orderId: number, remains: number) {
     { id: "mass-order", label: "Mass Order", content: resultsData?.refillMassOrderFormat, color: "text-purple-400", icon: Download },
     { id: "not-found", label: "Not Found", content: resultsData?.notFoundIds, color: "text-red-400", icon: AlertCircle },
     { id: "success", label: "Success", content: resultsData?.successMainIds, color: "text-green-400", icon: CheckCircle },
+    { id: "bellow-start-count", label: "bellow start count", content: resultsData?.bellowStartCountIds, color: "text-green-400", icon: X },
   ]
 
   const OrderCard = ({ order }: { order: Order }) => {
@@ -238,16 +277,15 @@ async function handlePartial(orderId: number, remains: number) {
     const difference = targetCount - currentCount
     const dropRate = isBelowTarget ? (difference / order.quantity) * 100 : 0
     console.log(`4994 | ${order.link} | ${difference}`)
-    
+
 
     return (
-      <div className={`bg-gray-800 rounded-lg p-4 border transition-all duration-200 hover:shadow-lg ${
-        isBelowTarget
-          ? dropRate >= 100
-            ? "border-amber-500/50 bg-amber-900/20"
-            : "border-red-500/50 bg-red-900/20"
-          : "border-gray-700 hover:border-gray-600"
-      }`}>
+      <div className={`bg-gray-800 rounded-lg p-4 border transition-all duration-200 hover:shadow-lg ${isBelowTarget
+        ? dropRate >= 100
+          ? "border-amber-500/50 bg-amber-900/20"
+          : "border-red-500/50 bg-red-900/20"
+        : "border-gray-700 hover:border-gray-600"
+        }`}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <span className="bg-blue-600 text-white text-xs font-medium px-2.5 py-1 rounded-full">
@@ -262,7 +300,7 @@ async function handlePartial(orderId: number, remains: number) {
             </button>
           </div>
         </div>
-        
+
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
             <span className="text-gray-400">Start:</span>
@@ -310,7 +348,7 @@ async function handlePartial(orderId: number, remains: number) {
             )}
           </div>
         </div>
-        
+
         {isBelowTarget && (
           <div className="mt-3 pt-3 border-t border-gray-700">
             <div className="flex items-center justify-between text-xs">
@@ -405,7 +443,7 @@ async function handlePartial(orderId: number, remains: number) {
                 </div>
                 <span className="text-2xl font-bold text-white">{orders.length}</span>
               </div>
-              
+
               <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
@@ -417,7 +455,7 @@ async function handlePartial(orderId: number, remains: number) {
                   {resultsData?.successMainIds !== "x" ? resultsData?.successMainIds.split(",").length : 0}
                 </span>
               </div>
-              
+
               <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
@@ -429,8 +467,8 @@ async function handlePartial(orderId: number, remains: number) {
                   {resultsData?.refillMainIds !== "x" ? resultsData?.refillMainIds.split(",").length : 0}
                 </span>
               </div>
-              
-           
+
+
             </div>
 
             {/* Orders Grid - Mobile Responsive */}
@@ -452,23 +490,24 @@ async function handlePartial(orderId: number, remains: number) {
                   <tbody>
                     {orders.map((order) => {
                       const username = order.link
+                      const status = order.status
+
                       const instagramInfo = instagramData.find((t) => t.url === username)
                       const targetCount = order.quantity + order.start_count
                       const currentCount = instagramInfo?.count || -1
                       const isBelowTarget = instagramInfo?.count !== -1 && currentCount < targetCount
                       const difference = targetCount - currentCount
                       const dropRate = isBelowTarget ? (difference / order.quantity) * 100 : 0
-
+                      console.log(dropRate, "dropRate")
                       return (
                         <tr
                           key={order.id}
-                          className={`border-b border-gray-700 transition-colors duration-200 hover:bg-gray-800/50 ${
-                            isBelowTarget
-                              ? dropRate >= 100
-                                ? "bg-amber-900/20"
-                                : "bg-red-900/20"
-                              : ""
-                          }`}
+                          className={`border-b border-gray-700 transition-colors duration-200 hover:bg-gray-800/50 ${isBelowTarget
+                            ? dropRate >= 100
+                              ? "bg-amber-900/20"
+                              : "bg-red-900/20"
+                            : ""
+                            }`}
                         >
                           <td className="py-4 px-4">
                             <span className="bg-blue-600 text-white text-xs font-medium px-2.5 py-1 rounded-full">
@@ -535,28 +574,28 @@ async function handlePartial(orderId: number, remains: number) {
                             )}
                           </td>
                           <td className="py-4 px-4">
-  {isBelowTarget ? (
-    <button
-      onClick={() => handlePartial(order.id, difference)}
-      disabled={partialLoadingId === order.id || partialDone[order.id] || difference <= 0}
-      className={`text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors
-        ${partialDone[order.id]
-          ? "bg-emerald-700 text-white cursor-default"
-          : partialLoadingId === order.id
-          ? "bg-gray-600 text-white cursor-wait"
-          : "bg-amber-600 hover:bg-amber-700 text-white"}`}
-      title={`Send partial: remains=${difference}`}
-    >
-      {partialDone[order.id]
-        ? "Sent ✓"
-        : partialLoadingId === order.id
-        ? "Sending..."
-        : `Partial (${difference})`}
-    </button>
-  ) : (
-    <span className="text-gray-500 text-sm">—</span>
-  )}
-</td>
+                            {isBelowTarget && dropRate <= 99 ? (
+                              <button
+                                onClick={() => handlePartial(order.id, difference)}
+                                disabled={partialLoadingId === order.id || partialDone[order.id] || difference <= 0 || status !== "Completed"}
+                                className={`text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors
+        ${status !== "completed" ? "bg-red-600 hover:bg-red-700 text-white" : partialDone[order.id]
+                                    ? "bg-emerald-700 text-white cursor-default"
+                                    : partialLoadingId === order.id
+                                      ? "bg-gray-600 text-white cursor-wait"
+                                      : "bg-amber-600 hover:bg-amber-700 text-white"}`}
+                                title={`Send partial: remains=${difference}`}
+                              >
+                                {status !== "completed" ? "Already Partial" : partialDone[order.id]
+                                  ? "Sent ✓"
+                                  : partialLoadingId === order.id
+                                    ? "Sending..."
+                                    : `Partial (${difference})`}
+                              </button>
+                            ) : (
+                              <span className="text-gray-500 text-sm">—</span>
+                            )}
+                          </td>
 
                         </tr>
                       )
@@ -585,7 +624,7 @@ async function handlePartial(orderId: number, remains: number) {
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setIsModalOpen(false)}
           />
-          
+
           <div className="relative bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
             {/* Modal Header */}
             <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6">
@@ -608,11 +647,10 @@ async function handlePartial(orderId: number, remains: number) {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2 ${
-                      activeTab === tab.id
-                        ? "text-blue-400 border-b-2 border-blue-400 bg-gray-700"
-                        : "text-gray-300 hover:text-white hover:bg-gray-700"
-                    }`}
+                    className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2 ${activeTab === tab.id
+                      ? "text-blue-400 border-b-2 border-blue-400 bg-gray-700"
+                      : "text-gray-300 hover:text-white hover:bg-gray-700"
+                      }`}
                   >
                     <tab.icon className="w-4 h-4" />
                     <span className="hidden sm:inline">{tab.label}</span>

@@ -24,6 +24,64 @@ export async function addSite(req, res) {
   res.status(201).json(newSite);
 }
 
+// 🆕 YENİ: Multi site ekleme endpoint'i
+export async function addMultipleSites(req, res) {
+  try {
+    const { domains, path = "services", categoryClass = "services-list-category-title" } = req.body;
+
+    // Domains array kontrolü
+    if (!domains || !Array.isArray(domains) || domains.length === 0) {
+      return res.status(400).json({ message: 'Domains array is required and cannot be empty' });
+    }
+
+    // Boş domainleri filtrele ve temizle
+    const cleanDomains = domains
+      .map(domain => domain.trim())
+      .filter(domain => domain.length > 0);
+
+    if (cleanDomains.length === 0) {
+      return res.status(400).json({ message: 'No valid domains provided' });
+    }
+
+    // Tüm siteleri toplu olarak ekle
+    const createdSites = [];
+    const errors = [];
+
+    for (const domain of cleanDomains) {
+      try {
+        const newSite = await SiteService.createSite({ 
+          domain, 
+          path, 
+          categoryClass 
+        });
+        createdSites.push(newSite);
+      } catch (error) {
+        errors.push({
+          domain,
+          error: error.message
+        });
+      }
+    }
+
+    // Sonuç döndür
+    res.status(201).json({
+      success: true,
+      created: createdSites.length,
+      errors: errors.length,
+      sites: createdSites,
+      failedSites: errors,
+      message: `${createdSites.length} site başarıyla eklendi${errors.length > 0 ? `, ${errors.length} site eklenemedi` : ''}`
+    });
+
+  } catch (error) {
+    console.error('Multi site creation error:', error);
+    res.status(500).json({ 
+      message: 'Internal server error during multi site creation',
+      error: error.message 
+    });
+  }
+}
+
 export async function updateSite(req, res) {
   const { id, domain, path, categoryClass } = req.body;
 
