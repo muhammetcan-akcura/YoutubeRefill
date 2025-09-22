@@ -1,11 +1,11 @@
 // controllers/serviceController.js
-import { getServicesWithPagination } from '../services/serviceService.js'
+import { getServicesWithPagination,getTwitterServices } from '../services/serviceService.js'
 
 export async function getPaginatedServices(req, res) {
   try {
     const limit = 1000
 
-    const services = await getServicesWithPagination(limit)
+    const services = await getTwitterServices()
 
     res.json({
       

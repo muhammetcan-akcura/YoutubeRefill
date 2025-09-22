@@ -6,6 +6,7 @@ import {
   addSite,
   updateSite,
   deleteSite,
+  addMultipleSites
 } from '../controllers/siteController.js'
 
 const router = express.Router()
@@ -13,6 +14,7 @@ const router = express.Router()
 router.get('/sites', getSites)
 router.get('/site/:id', getSite)
 router.post('/add-site', addSite)
+router.post('/add-multiple-sites', addMultipleSites)
 router.put('/update-sites', updateSite)
 router.delete('/delete-sites', deleteSite)
 

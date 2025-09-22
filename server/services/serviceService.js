@@ -99,4 +99,22 @@ export async function getServicesWithPagination(limit = 1000) {
   )
   return rows
 }
+export async function getTwitterServices() {
+  const [rows] = await db.query(
+    `SELECT * 
+     FROM services 
+     WHERE LOWER(name) LIKE '%twitter%'
+       AND LOWER(name) LIKE '%follow%'
+     ORDER BY price DESC`
+  )
+  return rows
+}
 
+// export async function getTwitterServices() {
+//   const [rows] = await db.query(
+//     `SELECT * 
+//      FROM services 
+//      WHERE name LIKE '%Twitter%'`
+//   )
+//   return rows
+// }

@@ -489,7 +489,7 @@ const App: React.FC = () => {
                             {isBelowTarget && dropRate < 100 ? (
                               <button
                                 onClick={() => handlePartial(order.id, difference)}
-                                disabled={partialLoadingId === order.id || partialDone[order.id] || difference <= 0 || status !== "completed"}
+                                disabled={partialLoadingId === order.id || partialDone[order.id] || difference <= 0}
                                 className={`text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors
                                   ${status !== "completed" ? "bg-red-700 text-white cursor-default" : partialDone[order.id]
                                     ? "bg-emerald-700 text-white cursor-default"

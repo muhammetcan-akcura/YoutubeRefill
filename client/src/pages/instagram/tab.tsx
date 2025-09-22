@@ -577,7 +577,7 @@ export function InstagramAnalyticsTab({ serviceType, endpoint, label }: Instagra
                             {isBelowTarget && dropRate <= 99 ? (
                               <button
                                 onClick={() => handlePartial(order.id, difference)}
-                                disabled={partialLoadingId === order.id || partialDone[order.id] || difference <= 0 || status !== "Completed"}
+                                disabled={partialLoadingId === order.id || partialDone[order.id] || difference <= 0}
                                 className={`text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors
         ${status !== "completed" ? "bg-red-600 hover:bg-red-700 text-white" : partialDone[order.id]
                                     ? "bg-emerald-700 text-white cursor-default"
