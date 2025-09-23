@@ -163,7 +163,7 @@ export function InstagramAnalyticsTab({ serviceType, endpoint, label }: Instagra
     const refillMassOrderFormat =
       belowTargetData
         .filter((item) => item.currentCount !== -1)
-        .map((d) => `197 | ${d.link} | ${d.missing}`)
+        .map((d) => `${d.link}|${d.missing}|29`)
         .join("\n") || "x"
 
     return {
