@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import Sidebar from "./components/sidebar/sidebar"
 import Ticket from "./ticket"
 import YoutubeViewerCheck from "./YoutubeStatsChecker"
-import TwitterDataFetcher from "./pages/twitter/twitter"
+import TwitterDataFetcher from "./pages/twitter/index"
 import TiktokDataFetcher from "./pages/tiktok/tiktok"
 import InstagramDataFetcher from "./pages/instagram/instagram"
 import CustomRates from "./pages/customrates/index"
