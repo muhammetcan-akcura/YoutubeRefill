@@ -287,7 +287,7 @@ function TwitterAnalyticsTab({ serviceType, endpoint, label }: TwitterAnalyticsT
         ? { usernames: identifiers }
         : { tweet_ids: identifiers } // likes ve retweet için tweet_ids
 
-      const response = await axios.post(`http://localhost:5000${endpoint}`, requestBody)
+      const response = await axios.post(`https://youtuberefill-1.onrender.com${endpoint}`, requestBody)
       setTwitterData(response.data.data)
     } catch (err) {
       console.error("Twitter API fetch error:", err)
