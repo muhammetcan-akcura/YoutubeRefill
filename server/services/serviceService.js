@@ -102,19 +102,21 @@ export async function getServicesWithPagination(limit = 1000) {
 export async function getTwitterServices() {
   const [rows] = await db.query(
     `WITH ranked AS (
-        SELECT 
-          s.*,
-          ROW_NUMBER() OVER (
-            PARTITION BY site
-            ORDER BY CAST(service_id AS UNSIGNED) ASC, price DESC
-          ) AS rn
-        FROM services s
-        WHERE name LIKE '%Facebook Custom Comment%'
-      )
-      SELECT *
-      FROM ranked
-      WHERE rn = 1
-      ORDER BY CAST(service_id AS UNSIGNED) ASC, price DESC;`
+    SELECT 
+      s.*,
+      ROW_NUMBER() OVER (
+        PARTITION BY site
+        ORDER BY CAST(service_id AS UNSIGNED) ASC, price DESC
+      ) AS rn
+    FROM services s
+    WHERE name LIKE '%%'
+      AND CAST(service_id AS UNSIGNED) BETWEEN 1 AND 100
+)
+SELECT *
+FROM ranked
+WHERE rn = 1
+ORDER BY CAST(service_id AS UNSIGNED) ASC;
+`
   )
   return rows
 }

@@ -26,6 +26,7 @@ interface TwitterAnalyticsTabProps {
 
 function TwitterAnalyticsTab({ serviceType, endpoint, label }: TwitterAnalyticsTabProps) {
   const [ids, setIds] = useState("")
+  const [massorderID, setMassOrderID] = useState("2483")
   const [orders, setOrders] = useState<Order[]>([])
   const [twitterData, setTwitterData] = useState<TwitterData[]>([])
   const [loading, setLoading] = useState(false)
@@ -217,7 +218,7 @@ function TwitterAnalyticsTab({ serviceType, endpoint, label }: TwitterAnalyticsT
 
     const refillMassOrderFormat = belowTargetData
       .filter((item) => item.currentCount !== -1)
-      .map((d) => `2483 | ${d.username} | ${d.missing}`)
+      .map((d) => `${massorderID} | ${d.link} | ${d.missing}`)
       .join("\n") || "x"
 
     return {
@@ -748,39 +749,86 @@ function TwitterAnalyticsTab({ serviceType, endpoint, label }: TwitterAnalyticsT
               </div>
 
               {/* Tab Content */}
-              <div className="flex-1 overflow-y-auto p-6">
-                {tabs.map((tab) => (
-                  <div key={tab.id} className={activeTab === tab.id ? "block" : "hidden"}>
-                    <div className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden">
-                      <div className="p-4 border-b border-gray-700 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <tab.icon className="w-5 h-5 text-blue-400" />
-                          <h3 className="text-lg font-semibold text-white">{tab.label}</h3>
-                          {tab.id === "mass-order" && resultsData && (
-                            <span className="text-sm text-gray-400 bg-gray-700 px-2 py-1 rounded">
-                              ${resultsData.missingTotal.toFixed(5)}
-                            </span>
-                          )}
-                        </div>
-                        <button
-                          onClick={() => handleCopy(tab.content || "", tab.id)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2"
-                        >
-                          {copiedTab === tab.id ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                          {copiedTab === tab.id ? "Copied!" : "Copy"}
-                        </button>
-                      </div>
-                      <div className="p-4">
-                        <div className="bg-gray-900 p-4 rounded-lg">
-                          <pre className={`${tab.color} text-sm whitespace-pre-wrap font-mono break-all`}>
-                            {tab.content || "No data"}
-                          </pre>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+             <div className="flex-1 overflow-y-auto p-6">
+  {tabs.map((tab) => (
+    <div key={tab.id} className={activeTab === tab.id ? "block" : "hidden"}>
+      <div className="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden">
+        {/* Header */}
+        <div className="p-4 border-b border-gray-700 flex items-center justify-between gap-4">
+          {/* Left: icon + title + optional small badge */}
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex items-center gap-3 min-w-0">
+              <tab.icon className="w-5 h-5 text-blue-400 flex-shrink-0" />
+              <h3 className="text-lg font-semibold text-white truncate">{tab.label}</h3>
+            </div>
+
+            {tab.id === "mass-order" && typeof resultsData?.missingTotal === "number" && (
+              <span className="text-sm text-gray-300 bg-gray-700 px-2 py-1 rounded ml-2">
+                ${resultsData.missingTotal.toFixed(5)}
+              </span>
+            )}
+          </div>
+
+          {/* Middle: mass-order input (only visible for mass-order). Limited width so it won't push the copy button */}
+          {tab.id === "mass-order" ? (
+            <div className="flex-1 max-w-xs mx-4">
+              <div className="relative">
+                <input
+                  id="massorder"
+                  onChange={(e) => setMassOrderID(e.target.value)}
+                  value={massorderID}
+                  type="text"
+                  placeholder="Mass order id"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-gray-900 text-white placeholder-gray-400 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  autoComplete="off"
+                  aria-label="Mass order id"
+                />
+                {/* Clear button */}
+                {massorderID ? (
+                  <button
+                    onClick={() => setMassOrderID("")}
+                    className="absolute right-1 top-1/2 -translate-y-1/2 px-2 py-1 rounded hover:bg-gray-800"
+                    aria-label="Clear mass order id"
+                    title="Temizle"
+                    type="button"
+                  >
+                    ✕
+                  </button>
+                ) : null}
               </div>
+            </div>
+          ) : (
+            // keep spacing consistent when input absent
+            <div className="mx-4 flex-1 max-w-xs" />
+          )}
+
+          {/* Right: copy button */}
+          <div className="flex items-center">
+            <button
+              onClick={() => handleCopy(tab.content || "", tab.id)}
+              className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2"
+              aria-label={`Copy ${tab.label}`}
+              type="button"
+            >
+              {copiedTab === tab.id ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              <span>{copiedTab === tab.id ? "Copied!" : "Copy"}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="p-4">
+          <div className="bg-gray-900 p-4 rounded-lg">
+            <pre className={`${tab.color} text-sm whitespace-pre-wrap font-mono break-all`}>
+              {tab.content || "No data"}
+            </pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  ))}
+</div>
+
             </div>
           </div>
         </div>

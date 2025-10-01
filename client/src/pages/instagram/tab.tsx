@@ -27,6 +27,7 @@ interface InstagramAnalyticsTabProps {
 
 export function InstagramAnalyticsTab({ serviceType, endpoint, label }: InstagramAnalyticsTabProps) {
   const [ids, setIds] = useState("")
+   const [massorderID, setMassOrderID] = useState("195")
   const [orders, setOrders] = useState<Order[]>([])
   const [instagramData, setInstagramData] = useState<InstagramData[]>([])
   const [loading, setLoading] = useState(false)
@@ -163,7 +164,7 @@ export function InstagramAnalyticsTab({ serviceType, endpoint, label }: Instagra
     const refillMassOrderFormat =
       belowTargetData
         .filter((item) => item.currentCount !== -1)
-        .map((d) => `64 | ${d.link} | ${d.missing}`)
+        .map((d) => `${massorderID} | ${d.link} | ${d.missing}`)
         .join("\n") || "x"
 
     return {
@@ -673,6 +674,37 @@ export function InstagramAnalyticsTab({ serviceType, endpoint, label }: Instagra
                             </span>
                           )}
                         </div>
+                         {tab.id === "mass-order" ? (
+            <div className="flex-1 max-w-xs mx-4">
+              <div className="relative">
+                <input
+                  id="massorder"
+                  onChange={(e) => setMassOrderID(e.target.value)}
+                  value={massorderID}
+                  type="text"
+                  placeholder="Mass order id"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-gray-900 text-white placeholder-gray-400 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  autoComplete="off"
+                  aria-label="Mass order id"
+                />
+                {/* Clear button */}
+                {massorderID ? (
+                  <button
+                    onClick={() => setMassOrderID("")}
+                    className="absolute right-1 top-1/2 -translate-y-1/2 px-2 py-1 rounded hover:bg-gray-800"
+                    aria-label="Clear mass order id"
+                    title="Temizle"
+                    type="button"
+                  >
+                    ✕
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          ) : (
+            // keep spacing consistent when input absent
+            <div className="mx-4 flex-1 max-w-xs" />
+          )}
                         <button
                           onClick={() => handleCopy(tab.content || "", tab.id)}
                           className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2"
