@@ -6,7 +6,7 @@ const router = express.Router();
 
 // RapidAPI anahtarları (birden fazla anahtar kullanarak rate limit'i aşabilirsin)
 const RAPIDAPI_KEYS = [
-  "cdb2001d49msh2a45d9fef1b322ep1b3a56jsnaf70b1052ca1"
+  "9bde8f1296msha2a60c1b442d082p100f1ejsn9a2d029c3a52"
 ];
 const cache = new Map();
 

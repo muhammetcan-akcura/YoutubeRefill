@@ -79,6 +79,8 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
       missing: number
       external_id: number
       currentCount: number
+      quantity:number
+      status:number
     }[] = []
     const aboveTargetIds: number[] = []
 
@@ -86,10 +88,11 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
       const username = order.link
       const tikTokInfo = tikTokData.find((t) => t.url === username)
       if (!tikTokInfo || tikTokInfo.count === null) return
+      
 
       const targetCount = order.quantity + order.start_count
       const currentCount = tikTokInfo.count
-
+      const status = tikTokInfo.status
       if (currentCount < targetCount) {
         const missing = targetCount - currentCount
         belowTargetData.push({
@@ -98,6 +101,8 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
           link: order.link,
           missing,
           external_id: order.external_id,
+          quantity:order.quantity,
+          status:status
         })
       } else {
         aboveTargetIds.push(order.id)
@@ -117,7 +122,7 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
         .join(",") || "x"
     const idsLine =
       belowTargetData
-        .filter((item) => item.currentCount !== -1)
+        .filter((item) => item.currentCount !== -1 && item.missing / (item.quantity / 100) > 10 && item.status !== 400 && item.missing / (item.quantity / 100) < 99.9   )
         .map((d) => d.id)
         .join(",") || "x"
     const refillExternal =
