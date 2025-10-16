@@ -147,7 +147,7 @@ const YoutubeStatsChecker: React.FC = () => {
 
       // Collect items that need refill
       const refillNeeded: RefillItem[] = [];
-      
+      const refillNotNeed :any = []
 
 
 
@@ -178,6 +178,17 @@ const YoutubeStatsChecker: React.FC = () => {
               const accessResult = await checkVideoAccessibility(order.link, addLog);
               if (accessResult.accessible) {
                 addLog(`✅ Success! Video is accessible: ${accessResult.title}`);
+                 refillNotNeed.push({
+                  id: order.id,
+                  mainID: order.mainID,
+                  count: order.count,
+                  currentCount: 0,
+                  errorReason: accessResult.error,
+                  link: order.link,
+                  mainLink: order.mainLink,
+                  startCount: order.startCount
+                });
+
               } else {
                 addLog(`❌ Failed! Video not accessible. Reason: ${accessResult.error}`);
 
@@ -209,6 +220,15 @@ const YoutubeStatsChecker: React.FC = () => {
 
           if (currentCount >= expectedTotal) {
             addLog(`✅ Success! ID: ${order.id}`);
+             refillNotNeed.push({
+              id: order.id,
+              mainID: order.mainID,
+              count: order.count,
+              startCount: order.startCount,
+              link:order.link,
+              currentCount
+            });
+            
           } else {
             addLog(`❌ Failed! ID: ${order.id}`);
             refillNeeded.push({
@@ -254,6 +274,10 @@ const YoutubeStatsChecker: React.FC = () => {
           const detailedList = refillNeeded.map(item => {
             return `${item.mainID},`
           })
+          const successOrderId = refillNotNeed.map((item:any) => {
+            return `${item.mainID},`
+          })
+          console.log(successOrderId,"successOrderId")
 
           const finalContent = `\nReports Detail (${formattedDate}):\n${detailedList}`;
 
@@ -266,7 +290,10 @@ console.log(refillNeeded.map((item: any) => {
         link: item.link,
         quantity: (item.count + item.startCount) - item.currentCount
     }}))
-    
+    const successOrderId = refillNotNeed.map((item:any) => {
+            return `${item.mainID}`
+          })
+          console.log(successOrderId.join(","),"successOrderId")
 const missingOver90 :any= [];
 const onlyrefill :any= [];
           const refillLines = refillNeeded

@@ -8,6 +8,7 @@ import InstagramDataFetcher from "./pages/instagram/instagram"
 import CustomRates from "./pages/customrates/index"
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import SiteManagementDashboard from "./pages/siteScraper"
+import DropCostCalculator from './pages/serviceOverFlowPrice'
 
 // 🔥 QueryClient oluştur
 const queryClient = new QueryClient()
@@ -27,6 +28,7 @@ function App() {
               <Route path="/instagram" element={<InstagramDataFetcher />} />
               <Route path="/custom-rates" element={<CustomRates />} />
               <Route path="/all-services" element={<SiteManagementDashboard />} />
+              <Route path="/overflow-calculator" element={<DropCostCalculator />} />
             </Routes>
           </main>
         </div>
