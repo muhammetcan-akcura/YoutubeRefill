@@ -27,7 +27,7 @@ interface InstagramAnalyticsTabProps {
 
 export function InstagramAnalyticsTab({ serviceType, endpoint, label }: InstagramAnalyticsTabProps) {
   const [ids, setIds] = useState("")
-   const [massorderID, setMassOrderID] = useState("5896")
+   const [massorderID, setMassOrderID] = useState("195")
   const [orders, setOrders] = useState<Order[]>([])
   const [instagramData, setInstagramData] = useState<InstagramData[]>([])
   const [loading, setLoading] = useState(false)
@@ -167,12 +167,19 @@ export function InstagramAnalyticsTab({ serviceType, endpoint, label }: Instagra
         .map((d) => `${massorderID} | ${d.link} | ${d.missing}`)
         .join("\n") || "x"
 
+        const refill8csnMassOrderFormat =
+      belowTargetData
+        .filter((item) => item.currentCount !== -1 && item.missing * 1.2 > 50 )
+        .map((d) => `${Math.ceil(d.missing * 1.2)}——${d.link}`)
+        .join("\n") || "x"
+
     return {
       // Target altında olanlar (refill gerekli)
       refillMainIds,
       refillProviderIds,
       refillProviderFormat,
       refillMassOrderFormat,
+      refill8csnMassOrderFormat,
       missingTotal: missingtotal,
 
       // Bulunamayanlar
@@ -264,6 +271,7 @@ export function InstagramAnalyticsTab({ serviceType, endpoint, label }: Instagra
       icon: Search,
     },
     { id: "mass-order", label: "Mass Order", content: resultsData?.refillMassOrderFormat, color: "text-purple-400", icon: Download },
+    { id: "8csn-mass-order", label: "8csn Mass Order", content: resultsData?.refill8csnMassOrderFormat, color: "text-purple-400", icon: Download },
     { id: "not-found", label: "Not Found", content: resultsData?.notFoundIds, color: "text-red-400", icon: AlertCircle },
     { id: "success", label: "Success", content: resultsData?.successMainIds, color: "text-green-400", icon: CheckCircle },
     { id: "bellow-start-count", label: "bellow start count", content: resultsData?.bellowStartCountIds, color: "text-green-400", icon: X },
@@ -706,7 +714,7 @@ export function InstagramAnalyticsTab({ serviceType, endpoint, label }: Instagra
             <div className="mx-4 flex-1 max-w-xs" />
           )}
                         <button
-                          onClick={() => handleCopy(tab.content || "", tab.id)}
+                          onClick={() => handleCopy(tab.content, tab.id)}
                           className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2"
                         >
                           {copiedTab === tab.id ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
