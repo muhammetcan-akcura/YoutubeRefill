@@ -5,6 +5,7 @@ import axios from "axios"
 import { Search, BarChart3, AlertCircle, CheckCircle, ExternalLink, X, Copy, Download } from "lucide-react"
 
 interface Order {
+  service_id:number,
   id: number
   link: string
   start_count: number
@@ -76,12 +77,14 @@ export function InstagramAnalyticsTab({ serviceType, endpoint, label }: Instagra
     if (orders.length === 0 || instagramData.length === 0) return null
 
     const belowTargetData: {
+      quantity: number
       id: number
       link: string
       missing: number
       external_id: number
       currentCount: number
       start_count: number
+      service_id: number
     }[] = []
     const aboveTargetIds: number[] = []
     const bellowStartCountIds: number[] = []
@@ -105,7 +108,10 @@ export function InstagramAnalyticsTab({ serviceType, endpoint, label }: Instagra
       // 📉 TARGET'IN ALTINDA OLANLAR (Refill gerekli)
       else if (currentCount < targetCount) {
         const missing = targetCount - currentCount
+        
         belowTargetData.push({
+          quantity: order.quantity,
+          service_id: order.service_id,
           currentCount: currentCount,
           id: order.id,
           link: order.link,
@@ -169,8 +175,18 @@ export function InstagramAnalyticsTab({ serviceType, endpoint, label }: Instagra
 
         const refill8csnMassOrderFormat =
       belowTargetData
-        .filter((item) => item.currentCount !== -1 && item.missing * 1.2 > 50 )
-        .map((d) => `${Math.ceil(d.missing * 1.2)}——${d.link}`)
+        .filter((item) => item.currentCount !== -1 )
+            .map((d) => `${d.service_id == 5895 ? Math.ceil(d.quantity * 1.35 - d.quantity + d.missing) :
+              d.service_id == 5836 ? Math.ceil(d.quantity * 1.35 - d.quantity + d.missing) :
+                d.service_id == 5853 ? Math.ceil(d.quantity * 1.35 - d.quantity + d.missing) :
+                  d.service_id == 5634 ? Math.ceil(d.quantity * 1.35 - d.quantity + d.missing) :
+                    d.service_id == 5831 ? Math.ceil(d.quantity * 1.4 - d.quantity + d.missing) :
+                      d.service_id == 5902 ? Math.ceil(d.quantity * 1.35 - d.quantity + d.missing) :
+                        d.service_id == 5826 ? Math.ceil(d.quantity * 1.35 - d.quantity + d.missing) :
+                          d.service_id == 6093 ? Math.ceil(d.quantity * 1.5 - d.quantity + d.missing) :
+                            d.service_id == 5621 ? Math.ceil(d.quantity * 1.35 - d.quantity + d.missing) :
+                              d.service_id == 5922 ? Math.ceil(d.quantity * 1.5 - d.quantity + d.missing) :
+                                Math.ceil(d.missing)}——${d.link}`)
         .join("\n") || "x"
 
     return {
