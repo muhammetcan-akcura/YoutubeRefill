@@ -182,10 +182,11 @@ export function InstagramAnalyticsTab({ serviceType, endpoint, label }: Instagra
                   d.service_id == 5634 ? Math.ceil(d.quantity * 1.35 - d.quantity + d.missing) :
                     d.service_id == 5831 ? Math.ceil(d.quantity * 1.4 - d.quantity + d.missing) :
                       d.service_id == 5902 ? Math.ceil(d.quantity * 1.35 - d.quantity + d.missing) :
-                        d.service_id == 5826 ? Math.ceil(d.quantity * 1.35 - d.quantity + d.missing) :
-                          d.service_id == 6093 ? Math.ceil(d.quantity * 1.5 - d.quantity + d.missing) :
-                            d.service_id == 5621 ? Math.ceil(d.quantity * 1.35 - d.quantity + d.missing) :
-                              d.service_id == 5922 ? Math.ceil(d.quantity * 1.5 - d.quantity + d.missing) :
+                        d.service_id == 5895 ? Math.ceil(d.quantity * 1.35 - d.quantity + d.missing) :
+                          d.service_id == 5826 ? Math.ceil(d.quantity * 1.35 - d.quantity + d.missing) :
+                            d.service_id == 6093 ? Math.ceil(d.quantity * 1.5 - d.quantity + d.missing) :
+                              d.service_id == 5621 ? Math.ceil(d.quantity * 1.35 - d.quantity + d.missing) :
+                                d.service_id == 5922 ? Math.ceil(d.quantity * 1.5 - d.quantity + d.missing) :
                                 Math.ceil(d.missing)}——${d.link}`)
         .join("\n") || "x"
 
