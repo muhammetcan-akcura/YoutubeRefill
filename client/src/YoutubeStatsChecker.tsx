@@ -312,7 +312,7 @@ const onlyrefill :any= [];
     onlyrefill.push(item.mainID); 
   }
 
-  if (missingPercent >= 10) {
+  if (missingAmount >= 50) {
     missingOver90.push(item.mainID); 
   }
 
@@ -320,17 +320,17 @@ const onlyrefill :any= [];
 }).join('\n');
 
 
-console.log('IDs with over 90% missing:', missingOver90.join(","));
+console.log('IDs with over 50> missing:', missingOver90.join(","));
 let totalQuantity = 0;
 
-const massorder = refillNeeded.map((item: any) => {
-  const quantity = (item.count + item.startCount) - item.currentCount;
-  totalQuantity += quantity;
-  return `38 | ${item.link} | ${quantity}`;
-}).join("\n");
+const massorder = ""
+// refillNeeded.map((item: any) => {
+//   const quantity = (item.count + item.startCount) - item.currentCount;
+//   totalQuantity += quantity;
+//   return `1 | ${item.link} | ${quantity}`;
+// }).join("\n");
 
 console.log("Toplam Quantity:", totalQuantity);
-console.log("Massorder:\n" + massorder);
           const idList = refillNeeded.map(item => item.mainID).join(',');
           const finalContent = `${refillLines}\n\n${idList}\n\n\n ${massorder}`;
           setRefillContent(finalContent);
