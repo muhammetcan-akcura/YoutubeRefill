@@ -177,20 +177,20 @@ const YoutubeStatsChecker: React.FC = () => {
             case 'embed':
               const accessResult = await checkVideoAccessibility(order.link, addLog);
               if (accessResult.accessible) {
-                addLog(`✅ Success! Video is accessible: ${accessResult.title}`);
+                addLog(`✅ Success! Video is accessible`);
                  refillNotNeed.push({
                   id: order.id,
                   mainID: order.mainID,
                   count: order.count,
                   currentCount: 0,
-                  errorReason: accessResult.error,
+               
                   link: order.link,
                   mainLink: order.mainLink,
                   startCount: order.startCount
                 });
 
               } else {
-                addLog(`❌ Failed! Video not accessible. Reason: ${accessResult.error}`);
+                addLog(`❌ Failed! Video not accessible`);
 
                 // Add to refill list with error information
                 refillNeeded.push({
@@ -198,7 +198,7 @@ const YoutubeStatsChecker: React.FC = () => {
                   mainID: order.mainID,
                   count: order.count,
                   currentCount: 0,
-                  errorReason: accessResult.error,
+                 
                   link: order.link,
                   mainLink: order.mainLink,
                   startCount: order.startCount

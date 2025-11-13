@@ -345,26 +345,170 @@ export const checkVideoAccessibility = async (url: string, addLog: (message: str
       addLog(`❌ Invalid YouTube URL: ${url}`);
       return { accessible: false, error: 'invalid_url' };
     }
-    const embedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
-    const response = await fetch(embedUrl);
-    if (response.ok) {
-      const data: any = await response.json();
-      addLog(`✅ Video is accessible: ${data.title}`);
-      return { accessible: true, title: data.title };
-    } else {
-      if (response.status === 404) {
-        addLog(`❌ Video not found or deleted: ${videoId}`);
-        return { accessible: false, error: 'video_not_found' };
-      } else if (response.status === 401 || response.status === 403) {
-        addLog(`❌ Embedding is disabled for this video: ${videoId}`);
-        return { accessible: false, error: 'embedding_disabled' };
+
+    // 1) YouTube Data API ile detaylı meta çek
+    const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=status,contentDetails,snippet&id=${videoId}`;
+    let apiRes;
+    try {
+      apiRes = await fetchWithKeyRotation(apiUrl, addLog);
+    } catch (err) {
+      addLog(`❌ Data API fetch failed: ${(err as Error).message}`);
+      return { accessible: false, error: 'api_fetch_failed', details: (err as Error).message };
+    }
+
+    // quota / permission gibi durumları burada ele al
+    if (!apiRes.ok) {
+      const text = await apiRes.text().catch(() => '');
+      addLog(`⚠️ Data API returned non-ok status (${apiRes.status}).`);
+      // rota: quota -> rotate (fetchWithKeyRotation yapıyor zaten) ama yine de bilgi ver
+      if (apiRes.status === 403) {
+        // mümkünse sebepleri çözümlemek için body'ye bak
+        if (text.includes('quotaExceeded') || text.includes('quota')) {
+          addLog('⚠️ Data API quota exceeded on current key(s).');
+          return { accessible: false, error: 'quota_exceeded' };
+        }
+        addLog(`⚠️ Permission / Auth issue (403). Body: ${text.substring(0, 400)}`);
+        return { accessible: false, error: 'forbidden', status: 403, body: text };
+      }
+      if (apiRes.status === 404) {
+        addLog('❌ Data API returned 404 (not found). Trying oEmbed as fallback...');
       } else {
-        addLog(`❌ Unknown error while checking video (Status: ${response.status}): ${videoId}`);
-        return { accessible: false, error: 'unknown', status: response.status };
+        return { accessible: false, error: 'api_non_ok', status: apiRes.status, body: text };
       }
     }
+
+    const apiJson: any = await apiRes.json().catch(() => null);
+
+    // item yoksa videonun bulunamadığı durumu ele al
+    if (!apiJson?.items || apiJson.items.length === 0) {
+      addLog(`⚠️ Video not returned by Data API: ${videoId}. Trying oEmbed fallback...`);
+      // oEmbed fallback açağız (still could be deleted/private)
+      const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
+      try {
+        const o = await fetch(oembedUrl);
+        if (o.ok) {
+          const od = await o.json();
+          addLog(`ℹ️ oEmbed success: ${od.title} — video exists but API couldn't return details (probably private or permission issue).`);
+          return {
+            accessible: false,
+            error: 'api_no_items_but_oembed_ok',
+            oembed: { ok: true, title: od.title },
+            note: 'Video exists but Data API did not return metadata (possibly private or requires OAuth).'
+          };
+        } else if (o.status === 404) {
+          addLog(`❌ oEmbed 404 — video not found/deleted: ${videoId}`);
+          return { accessible: false, error: 'video_not_found' };
+        } else if (o.status === 401 || o.status === 403) {
+          addLog(`❌ oEmbed returned ${o.status} — embedding disabled or auth required: ${videoId}`);
+          return { accessible: false, error: 'embedding_disabled' };
+        } else {
+          addLog(`❌ oEmbed unknown status ${o.status} for ${videoId}`);
+          return { accessible: false, error: 'oembed_unknown', status: o.status };
+        }
+      } catch (oe) {
+        addLog(`❌ oEmbed fetch error: ${(oe as Error).message}`);
+        return { accessible: false, error: 'oembed_fetch_error', details: (oe as Error).message };
+      }
+    }
+
+    // artık metadata var
+    const item = apiJson.items[0];
+    const status = item.status || {};
+    const details = item.contentDetails || {};
+    const snippet = item.snippet || {};
+
+    // önemli bayraklar
+    const embeddable = status.embeddable === true;
+    const privacyStatus = status.privacyStatus || 'unknown';
+    const madeForKids = status.madeForKids === true;
+    const uploadStatus = status.uploadStatus || 'unknown';
+    const license = status.license || null;
+    const ageRestricted = details?.contentRating?.ytRating === 'ytAgeRestricted' || false;
+    const licensedContent = details?.licensedContent === true;
+    const duration = details.duration || null;
+    const regionRestriction = details.regionRestriction || null; // { allowed: [...], blocked: [...] } veya undefined
+
+    // oEmbed kontrolu (embed HTML verilip verilmediğini görmek için)
+    const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
+    let oembedOk = false;
+    let oembedData: any = null;
+    try {
+      const oRes = await fetch(oembedUrl);
+      if (oRes.ok) {
+        oembedOk = true;
+        oembedData = await oRes.json();
+      } else {
+        // 401/403 -> embedding disabled; 404 -> not found
+        oembedOk = false;
+        oembedData = { status: oRes.status };
+      }
+    } catch (oe) {
+      addLog(`⚠️ oEmbed fetch error: ${(oe as Error).message}`);
+    }
+
+    // oynatma hatası önerileri — neden embed çalışmayabilir?
+    const problems: string[] = [];
+    if (privacyStatus !== 'public') problems.push('privacy');
+    if (!embeddable) problems.push('embedding_disabled');
+    if (ageRestricted) problems.push('age_restricted');
+    if (madeForKids) problems.push('made_for_kids');
+    if (licensedContent) problems.push('licensed_content_may_restrict_playback');
+    if (regionRestriction?.blocked?.length) problems.push('region_blocked');
+    if (uploadStatus !== 'processed') problems.push('not_processed');
+
+    // kullanıcıya okunur hata kodu belirle
+    let errorCode: string | null = null;
+    if (problems.length) {
+      // önceliklendirme: privacy/age/embedding/region
+      if (problems.includes('privacy')) errorCode = 'video_private';
+      else if (problems.includes('age_restricted')) errorCode = 'age_restricted';
+      else if (problems.includes('embedding_disabled')) errorCode = 'embedding_disabled';
+      else if (problems.includes('region_blocked')) errorCode = 'region_blocked';
+      else if (problems.includes('licensed_content_may_restrict_playback')) errorCode = 'licensed_content';
+      else errorCode = 'playback_restricted';
+    }
+
+    // detaylı dönüş objesi
+    const result = {
+      accessible: !errorCode && oembedOk, // embed erişilebilirliği için oembedOk ve no critical errors
+      videoId,
+      title: snippet.title || null,
+      embeddable,
+      privacyStatus,
+      ageRestricted,
+      madeForKids,
+      licensedContent,
+      license,
+      uploadStatus,
+      duration,
+      regionRestriction, // doğrudan sun
+      oembed: { ok: oembedOk, data: oembedData },
+      problems,
+      errorCode,
+      raw: {
+        status,
+        contentDetails: details,
+        snippet
+      }
+    };
+
+    // logs
+    addLog(`ℹ️ Video meta: title=${snippet.title || 'N/A'}, embeddable=${embeddable}, privacy=${privacyStatus}, ageRestricted=${ageRestricted}`);
+    if (regionRestriction) {
+      addLog(`ℹ️ Region restriction: ${JSON.stringify(regionRestriction)}`);
+    }
+    if (!oembedOk) {
+      addLog(`⚠️ oEmbed not ok (embedding might be disabled or oEmbed blocked).`);
+    }
+    if (problems.length) {
+      addLog(`⚠️ Playback problems detected: ${problems.join(', ')}`);
+    } else {
+      addLog(`✅ No obvious playback restrictions detected.`);
+    }
+
+    return result;
   } catch (error) {
-    addLog(`❌ oEmbed API error: ${(error as Error).message}`);
-    return { accessible: false, error: 'api_error' };
+    addLog(`❌ Unexpected error in checkVideoAccessibility: ${(error as Error).message}`);
+    return { accessible: false, error: 'unexpected_error', details: (error as Error).message };
   }
 };
