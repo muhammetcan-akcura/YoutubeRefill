@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { NavLink } from "react-router-dom"
-import { Youtube, Ticket, Menu, X, Twitter, Instagram, Music2, BadgePercent, Calculator } from "lucide-react"
+import { Youtube, Ticket, Menu, X, Twitter, Instagram, Music2, RefreshCcwIcon } from "lucide-react"
 
 const Sidebar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -14,9 +14,10 @@ const Sidebar = () => {
     { name: "Instagram", path: "/instagram", icon: <Instagram size={18} /> },
     { name: "Twitter", path: "/twitter", icon: <Twitter size={18} /> },
     { name: "Ticket", path: "/ticket", icon: <Ticket size={18} /> },
-    { name: "Custom Rates", path: "/custom-rates", icon: <BadgePercent size={18} /> },
-    { name: "Services Data", path: "/all-services", icon: <BadgePercent size={18} /> },
-    { name: "Overflow Calculator", path: "/overflow-calculator", icon: <Calculator size={18} /> },
+    { name: "Refill", path: "/refill-button", icon: <RefreshCcwIcon size={18} /> },
+    // { name: "Custom Rates", path: "/custom-rates", icon: <BadgePercent size={18} /> },
+    // { name: "Services Data", path: "/all-services", icon: <BadgePercent size={18} /> },
+    // { name: "Overflow Calculator", path: "/overflow-calculator", icon: <Calculator size={18} /> },
   ]
 
   // Handle window resize

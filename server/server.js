@@ -21,6 +21,7 @@ import ratesRouters from './routes/rates/index.js'
 import siteRoutes from './routes/siteRoutes.js'
 import scrapeRoutes from './routes/scrapeRoutes.js'
 import serviceRoutes from './routes/serviceRoutes.js'
+import refillRoutes from './refillRoutes.js'
 dotenv.config();
 const app = express();
 app.use(cors());
@@ -41,6 +42,7 @@ app.use(ratesRouters)
 app.use(siteRoutes)
 app.use(scrapeRoutes)
 app.use(serviceRoutes)
+app.use(refillRoutes)
 app.use(InstagramPartialRouters)
 app.use(TwitterPartialRouters)
 const apikey = process.env.apikey;

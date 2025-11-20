@@ -302,8 +302,7 @@ const onlyrefill :any= [];
   const totalNeeded = Number(item.count) + Number(item.startCount);
   const current = Number(item.currentCount);
   const missingAmount = totalNeeded - current;
-  const missingPercent = (missingAmount / Number(item.count)) * 100;
-
+  const missingPercent = missingAmount / (Number(item.count) / 100) 
   if (current < Number(item.startCount)) {
     return `${item.mainID}: bellow start count ${item.currentCount} - ${item.startCount}`;
   }
@@ -312,7 +311,7 @@ const onlyrefill :any= [];
     onlyrefill.push(item.mainID); 
   }
 
-  if (missingAmount >= 50) {
+  if (missingAmount >= 50 && missingPercent > 10 ) {
     missingOver90.push(item.mainID); 
   }
 
