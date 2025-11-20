@@ -12,7 +12,7 @@ type ResultItem = {
 
 export default function RefillBatchFrontend(): JSX.Element {
   const [idsText, setIdsText] = useState<string>("1219873,1200667");
-  const [domain, setDomain] = useState<string>("olsmm.com");
+  const [domain, setDomain] = useState<string>("oldsmm.com");
   const [cookie, setCookie] = useState<string>("");
   const [minDelay, setMinDelay] = useState<number>(0);
   const [maxDelay, setMaxDelay] = useState<number>(0);
@@ -74,7 +74,7 @@ export default function RefillBatchFrontend(): JSX.Element {
         concurrency: Math.max(1, Math.floor(concurrency)),
       };
 
-      const res = await axios.post("http://localhost:5000/refill-batch", payload, { timeout: 120000 });
+      const res = await axios.post("https://youtuberefill-1.onrender.com/refill-batch", payload, { timeout: 120000 });
 
       const data = res.data ?? {};
       const normalized: ResultItem[] = (data.results ?? []).map((r: any) => ({
