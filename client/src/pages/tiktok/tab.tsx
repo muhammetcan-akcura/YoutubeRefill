@@ -39,7 +39,7 @@ interface TikTokAnalyticsTabProps {
 
 export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnalyticsTabProps) {
   const [ids, setIds] = useState("")
-   const [massorderID, setMassOrderID] = useState("3")
+  const [massorderID, setMassOrderID] = useState("3")
   const [orders, setOrders] = useState<Order[]>([])
   const [tikTokData, setTikTokData] = useState<TikTokData[]>([])
   const [loading, setLoading] = useState(false)
@@ -79,8 +79,8 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
       missing: number
       external_id: number
       currentCount: number
-      quantity:number
-      status:number
+      quantity: number
+      status: number
     }[] = []
     const aboveTargetIds: number[] = []
 
@@ -88,7 +88,7 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
       const username = order.link
       const tikTokInfo = tikTokData.find((t) => t.url === username)
       if (!tikTokInfo || tikTokInfo.count === null) return
-      
+
 
       const targetCount = order.quantity + order.start_count
       const currentCount = tikTokInfo.count
@@ -101,8 +101,8 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
           link: order.link,
           missing,
           external_id: order.external_id,
-          quantity:order.quantity,
-          status:status
+          quantity: order.quantity,
+          status: status
         })
       } else {
         aboveTargetIds.push(order.id)
@@ -122,7 +122,7 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
         .join(",") || "x"
     const idsLine =
       belowTargetData
-        .filter((item) => item.currentCount !== -1 && item.missing  > 100 && item.status !== 400 && item.missing / (item.quantity / 100) < 100   )
+        .filter((item) => item.currentCount !== -1 && item.missing > 100 && item.status !== 400 && item.missing / (item.quantity / 100) < 100)
         .map((d) => d.id)
         .join(",") || "x"
     const refillExternal =
@@ -137,7 +137,12 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
         .join("\n") || "x"
     const detailLines =
       belowTargetData
-         .filter((item) => item.currentCount !== -1 && item.missing  > 100 && item.status !== 400 && item.missing / (item.quantity / 100) < 100   )
+        .filter((item) => item.currentCount !== -1 && item.missing > 100 && item.status !== 400 && item.missing / (item.quantity / 100) < 100)
+        .map((d) => `${massorderID} | ${d.link} | ${d.missing}`)
+        .join("\n") || "x"
+    const detailLines8csn =
+      belowTargetData
+        .filter((item) => item.currentCount !== -1 && item.missing > 100 && item.status !== 400 && item.missing / (item.quantity / 100) < 100)
         .map((d) => `${d.missing}——${d.link}`)
         .join("\n") || "x"
 
@@ -146,6 +151,7 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
       refillProviderIds: refillExternal,
       refillProviderFormat: refillLines,
       refillMassOrderFormat: detailLines,
+      refillMassOrderFormat8csn: detailLines8csn,
       missingTotal: missingtotal,
       notFoundIds: notFound,
       successMainIds: aboveContent,
@@ -340,6 +346,13 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
       color: "text-purple-400",
       icon: "📦",
     },
+    {
+      id: "8csn-mass-order",
+      label: "8csn Mass Order",
+      content: resultsData?.refillMassOrderFormat8csn,
+      color: "text-purple-400",
+      icon: "📦",
+    },
     { id: "not-found", label: "Not Found", content: resultsData?.notFoundIds, color: "text-red-400", icon: "❌" },
     { id: "success", label: "Success", content: resultsData?.successMainIds, color: "text-green-400", icon: "✅" },
   ]
@@ -457,13 +470,12 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
                     {currentPaginatedOrders.map((order) => (
                       <tr
                         key={order.id}
-                        className={`border-b border-slate-700 transition-colors duration-200 ${
-                          order.isBelowTarget
+                        className={`border-b border-slate-700 transition-colors duration-200 ${order.isBelowTarget
                             ? order.dropRate >= 100
                               ? "bg-amber-900/20 hover:bg-amber-800/30"
                               : "bg-red-900/20 hover:bg-red-800/30"
                             : "hover:bg-slate-700/50"
-                        }`}
+                          }`}
                       >
                         <td className="py-4 px-4">
                           <span className="bg-blue-600 text-white text-sm font-medium px-3 py-1 rounded-full">
@@ -531,11 +543,10 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
                                     </span>
                                   )}
                                 <span
-                                  className={`font-semibold text-sm px-3 py-1 rounded-full border ${
-                                    order.dropRate >= 100
+                                  className={`font-semibold text-sm px-3 py-1 rounded-full border ${order.dropRate >= 100
                                       ? "text-amber-500 border-amber-500"
                                       : "text-red-500 border-red-500"
-                                  }`}
+                                    }`}
                                 >
                                   {order.tikTokInfo.count === -1
                                     ? "Not Found"
@@ -572,13 +583,12 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
                 {currentPaginatedOrders.map((order) => (
                   <div
                     key={order.id}
-                    className={`border border-slate-600 rounded-lg p-4 ${
-                      order.isBelowTarget
+                    className={`border border-slate-600 rounded-lg p-4 ${order.isBelowTarget
                         ? order.dropRate >= 100
                           ? "bg-amber-900/20 border-amber-600/30"
                           : "bg-red-900/20 border-red-600/30"
                         : "bg-slate-900/50"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-between mb-3">
                       <span className="bg-blue-600 text-white text-sm font-medium px-3 py-1 rounded-full">
@@ -683,9 +693,8 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
                     <button
                       key={page}
                       onClick={() => handlePageChange(page)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                        currentPage === page ? "bg-blue-600 text-white" : "bg-slate-700 hover:bg-slate-600 text-white"
-                      }`}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium ${currentPage === page ? "bg-blue-600 text-white" : "bg-slate-700 hover:bg-slate-600 text-white"
+                        }`}
                     >
                       {page}
                     </button>
@@ -750,11 +759,10 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2 ${
-                      activeTab === tab.id
+                    className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2 ${activeTab === tab.id
                         ? "text-blue-400 border-b-2 border-blue-400 bg-slate-700/50"
                         : "text-slate-300 hover:text-white hover:bg-slate-700/50"
-                    }`}
+                      }`}
                   >
                     <span>{tab.icon}</span>
                     {tab.label}
@@ -777,36 +785,36 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
                           )}
                         </h3>
                         {tab.id === "mass-order" ? (
-            <div className="flex-1 max-w-xs mx-4">
-              <div className="relative">
-                <input
-                  id="massorder"
-                  onChange={(e) => setMassOrderID(e.target.value)}
-                  value={massorderID}
-                  type="text"
-                  placeholder="Mass order id"
-                  className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-gray-900 text-white placeholder-gray-400 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  autoComplete="off"
-                  aria-label="Mass order id"
-                />
-                {/* Clear button */}
-                {massorderID ? (
-                  <button
-                    onClick={() => setMassOrderID("")}
-                    className="absolute right-1 top-1/2 -translate-y-1/2 px-2 py-1 rounded hover:bg-gray-800"
-                    aria-label="Clear mass order id"
-                    title="Temizle"
-                    type="button"
-                  >
-                    ✕
-                  </button>
-                ) : null}
-              </div>
-            </div>
-          ) : (
-            // keep spacing consistent when input absent
-            <div className="mx-4 flex-1 max-w-xs" />
-          )}
+                          <div className="flex-1 max-w-xs mx-4">
+                            <div className="relative">
+                              <input
+                                id="massorder"
+                                onChange={(e) => setMassOrderID(e.target.value)}
+                                value={massorderID}
+                                type="text"
+                                placeholder="Mass order id"
+                                className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-gray-900 text-white placeholder-gray-400 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                autoComplete="off"
+                                aria-label="Mass order id"
+                              />
+                              {/* Clear button */}
+                              {massorderID ? (
+                                <button
+                                  onClick={() => setMassOrderID("")}
+                                  className="absolute right-1 top-1/2 -translate-y-1/2 px-2 py-1 rounded hover:bg-gray-800"
+                                  aria-label="Clear mass order id"
+                                  title="Temizle"
+                                  type="button"
+                                >
+                                  ✕
+                                </button>
+                              ) : null}
+                            </div>
+                          </div>
+                        ) : (
+                          // keep spacing consistent when input absent
+                          <div className="mx-4 flex-1 max-w-xs" />
+                        )}
                         <button
                           onClick={() => handleCopyToClipboard(tab.content || "", tab.id)}
                           className="flex items-center gap-2 px-3 py-2 text-sm bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
