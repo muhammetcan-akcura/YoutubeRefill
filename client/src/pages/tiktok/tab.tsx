@@ -137,7 +137,7 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
         .join("\n") || "x"
     const detailLines =
       belowTargetData
-        .filter((item) => item.currentCount !== -1 && item.missing > 100 && item.status !== 400 && item.missing / (item.quantity / 100) < 100)
+        .filter((item) => item.currentCount !== -1 &&  item.status !== 400 && item.missing / (item.quantity / 100) < 100)
         .map((d) => `${massorderID} | ${d.link} | ${d.missing}`)
         .join("\n") || "x"
     const detailLines8csn =
