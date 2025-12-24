@@ -122,7 +122,7 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
         .join(",") || "x"
     const idsLine =
       belowTargetData
-        .filter((item) => item.currentCount !== -1 && item.missing / (item.quantity / 100) > 10 && item.status !== 400 && item.missing / (item.quantity / 100) < 99.9   )
+        .filter((item) => item.currentCount !== -1 && item.missing  > 100 && item.status !== 400 && item.missing / (item.quantity / 100) < 100   )
         .map((d) => d.id)
         .join(",") || "x"
     const refillExternal =
@@ -137,8 +137,8 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
         .join("\n") || "x"
     const detailLines =
       belowTargetData
-        .filter((item) => item.currentCount !== -1)
-        .map((d) => `${massorderID} | ${d.link} | ${d.missing}`)
+         .filter((item) => item.currentCount !== -1 && item.missing  > 100 && item.status !== 400 && item.missing / (item.quantity / 100) < 100   )
+        .map((d) => `${d.missing}——${d.link}`)
         .join("\n") || "x"
 
     return {
