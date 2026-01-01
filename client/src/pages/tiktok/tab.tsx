@@ -83,7 +83,7 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
       status:number
     }[] = []
     const aboveTargetIds: number[] = []
-
+ const bellowStartCountIds: number[] = []
     orders.forEach((order) => {
       const username = order.link
       const tikTokInfo = tikTokData.find((t) => t.url === username)
@@ -92,6 +92,9 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
 
       const targetCount = order.quantity + order.start_count
       const currentCount = tikTokInfo.count
+       if (currentCount < order.start_count) {
+        bellowStartCountIds.push(order.id)
+      }
       const status = tikTokInfo.status
       if (currentCount < targetCount) {
         const missing = targetCount - currentCount
@@ -113,7 +116,8 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
       Number(
         belowTargetData.filter((item) => item.currentCount !== -1).reduce((total, item) => total + item.missing, 0),
       ) * 0.00045
-
+   // Başlangıç sayısının altında olanlar (Bu senin yeni eklediğin)
+    const bellowStartCountIdsStr = bellowStartCountIds.join(",") || "x"
     const aboveContent = aboveTargetIds.join(",") || "x"
     const notFound =
       belowTargetData
@@ -138,6 +142,11 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
     const detailLines =
       belowTargetData
          .filter((item) => item.currentCount !== -1 &&  item.status !== 400 && item.missing / (item.quantity / 100) < 100   )
+        .map((d) => `${ids} | ${d.link} | ${d.missing}`)
+        .join("\n") || "x"
+        const detailLines8csn =
+      belowTargetData
+         .filter((item) => item.currentCount !== -1 &&  item.status !== 400 && item.missing / (item.quantity / 100) < 100   )
         .map((d) => `${d.missing}——${d.link}`)
         .join("\n") || "x"
 
@@ -146,9 +155,11 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
       refillProviderIds: refillExternal,
       refillProviderFormat: refillLines,
       refillMassOrderFormat: detailLines,
+      refillMassOrderFormat8csn: detailLines8csn,
       missingTotal: missingtotal,
       notFoundIds: notFound,
       successMainIds: aboveContent,
+      bellowStartCountIds: bellowStartCountIdsStr,
     }
   }
 
@@ -340,7 +351,15 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
       color: "text-purple-400",
       icon: "📦",
     },
+    {
+      id: "mass-order-8csn",
+      label: "Mass Order 8csn",
+      content: resultsData?.refillMassOrderFormat8csn,
+      color: "text-purple-400",
+      icon: "📦",
+    },
     { id: "not-found", label: "Not Found", content: resultsData?.notFoundIds, color: "text-red-400", icon: "❌" },
+     { id: "bellow-start-count", label: "bellow start count", content: resultsData?.bellowStartCountIds, color: "text-green-400", icon: "❌" },
     { id: "success", label: "Success", content: resultsData?.successMainIds, color: "text-green-400", icon: "✅" },
   ]
 
