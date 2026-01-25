@@ -18,6 +18,8 @@ import InstagramCommentRouters from './routes/instagram/comments.js'
 import InstagramPartialRouters from './routes/instagram/partial.js'
 import TwitterPartialRouters from './routes/twitter/partial.js'
 import TiktokPartialRouters from './routes/tiktok/partial.js'
+import YoutubeCheckRouters from './routes/youtube/check.js'
+import YoutubeChannelRouters from './routes/youtube/channel.js'
 import ratesRouters from './routes/rates/index.js'
 import siteRoutes from './routes/siteRoutes.js'
 import scrapeRoutes from './routes/scrapeRoutes.js'
@@ -47,6 +49,8 @@ app.use(refillRoutes)
 app.use(InstagramPartialRouters)
 app.use(TwitterPartialRouters)
 app.use(TiktokPartialRouters)
+app.use(YoutubeCheckRouters)
+app.use(YoutubeChannelRouters)
 const apikey = process.env.apikey;
 console.log(apikey)
 app.post('/api/orders', async (req, res) => {

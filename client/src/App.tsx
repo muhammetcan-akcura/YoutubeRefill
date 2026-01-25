@@ -10,6 +10,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import SiteManagementDashboard from "./pages/siteScraper"
 import DropCostCalculator from './pages/serviceOverFlowPrice'
 import RefillBatchFrontend from './pages/clickButton'
+import YouTubeVideoChecker from './pages/youtubeChecker'
 
 // 🔥 QueryClient oluştur
 const queryClient = new QueryClient()
@@ -30,7 +31,8 @@ function App() {
               <Route path="/custom-rates" element={<CustomRates />} />
               <Route path="/all-services" element={<SiteManagementDashboard />} />
               <Route path="/overflow-calculator" element={<DropCostCalculator />} />
-               <Route path="/refill-button" element={<RefillBatchFrontend />} />
+              <Route path="/refill-button" element={<RefillBatchFrontend />} />
+              <Route path="/youtube-checker" element={<YouTubeVideoChecker />} />
             </Routes>
           </main>
         </div>
