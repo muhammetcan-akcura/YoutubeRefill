@@ -2,7 +2,6 @@ import { useState } from "react"
 import axios from "axios"
 
 export default function BulkTicket() {
-    const [apiKey, setApiKey] = useState("j1gxnm0oa8jgkojyclmso3z06a10t3ile34ppyty081zrewx9i7mqcey5a9e3lks")
     const [staffName, setStaffName] = useState("support")
     const [usernames, setUsernames] = useState("")
     const [subject, setSubject] = useState("")
@@ -17,7 +16,7 @@ export default function BulkTicket() {
             alert("Please enter at least one username.")
             return
         }
-        if (!apiKey || !subject || !message) {
+        if (!subject || !message) {
             alert("Please fill in all fields.")
             return
         }
@@ -36,12 +35,6 @@ export default function BulkTicket() {
                         subject: subject,
                         message: message,
                         ...(staffName && { staff_name: staffName }),
-                    },
-                    {
-                        headers: {
-                            "X-Api-Key": "9b8xp4y6egpz66izkbkbjh9ozadklon8geg1beg2llmlc41z7qos2sppo3m2my7e",
-                            "Content-Type": "application/json",
-                        },
                     }
                 )
 
@@ -86,17 +79,6 @@ export default function BulkTicket() {
 
                     {/* Form Section */}
                     <div className="space-y-6">
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-400 mb-1">API Key</label>
-                            <input
-                                type="text"
-                                value={apiKey}
-                                onChange={(e) => setApiKey(e.target.value)}
-                                placeholder="Enter your X-Api-Key"
-                                className="w-full bg-[#151725] border border-[#2a2c3c] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors"
-                            />
-                        </div>
 
                         <div>
                             <label className="block text-sm font-medium text-gray-400 mb-1">Staff Name (Optional)</label>

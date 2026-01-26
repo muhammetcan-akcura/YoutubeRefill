@@ -86,7 +86,7 @@ router.get('/ticket', async (req, res) => {
 
 router.post('/tickets/add', async (req, res) => {
   const { username, subject, message, staff_name } = req.body;
-  const apiKey = req.headers['x-api-key'] || process.env.API_KEY_1;
+  const apiKey = process.env.API_KEY_1;
 
   try {
     const response = await axios.post(
