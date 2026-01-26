@@ -11,6 +11,7 @@ import SiteManagementDashboard from "./pages/siteScraper"
 import DropCostCalculator from './pages/serviceOverFlowPrice'
 import RefillBatchFrontend from './pages/clickButton'
 import YouTubeVideoChecker from './pages/youtubeChecker'
+import BulkTicket from './pages/bulkTicket'
 
 // 🔥 QueryClient oluştur
 const queryClient = new QueryClient()
@@ -33,6 +34,7 @@ function App() {
               <Route path="/overflow-calculator" element={<DropCostCalculator />} />
               <Route path="/refill-button" element={<RefillBatchFrontend />} />
               <Route path="/youtube-checker" element={<YouTubeVideoChecker />} />
+              <Route path="/bulk-ticket" element={<BulkTicket />} />
             </Routes>
           </main>
         </div>
