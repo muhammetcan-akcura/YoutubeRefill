@@ -51,9 +51,10 @@ export default function BulkTicket() {
                 }
 
             } catch (error: any) {
+                const errorMessage = error.response?.data?.error_message || error.message || "Unknown Error";
                 setLogs((prev) => [
                     ...prev,
-                    { username: user, status: "error", msg: error.response?.data?.error_message || error.message || "Unknown Error" },
+                    { username: user, status: "error", msg: errorMessage },
                 ])
             }
             setProgress(((i + 1) / userList.length) * 100)
