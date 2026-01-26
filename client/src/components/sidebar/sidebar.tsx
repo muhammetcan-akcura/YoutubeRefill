@@ -10,6 +10,7 @@ const Sidebar = () => {
 
   const menu = [
     { name: "Youtubee", path: "/", icon: <Youtube size={18} /> },
+   // { name: "YouTube Checker", path: "/youtube-checker", icon: <Video size={18} /> },
     { name: "Tiktok", path: "/tiktok", icon: <Music2 size={18} /> },
     { name: "Instagram", path: "/instagram", icon: <Instagram size={18} /> },
     { name: "Twitter", path: "/twitter", icon: <Twitter size={18} /> },
@@ -35,7 +36,7 @@ const Sidebar = () => {
 
   // Close mobile menu when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event:any) => {
+    const handleClickOutside = (event: any) => {
       const sidebar = document.getElementById("sidebar")
       const hamburgerBtn = document.getElementById("hamburger-btn")
 
@@ -113,8 +114,7 @@ const Sidebar = () => {
               to={item.path}
               onClick={() => isMobile && setIsMobileMenuOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-2 rounded-lg transition ${
-                  isActive ? "bg-blue-600 text-white font-semibold" : "hover:bg-gray-800"
+                `flex items-center gap-3 px-4 py-2 rounded-lg transition ${isActive ? "bg-blue-600 text-white font-semibold" : "hover:bg-gray-800"
                 }`
               }
             >

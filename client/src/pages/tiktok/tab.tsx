@@ -39,7 +39,7 @@ interface TikTokAnalyticsTabProps {
 
 export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnalyticsTabProps) {
   const [ids, setIds] = useState("")
-   const [massorderID, setMassOrderID] = useState("3")
+  const [massorderID, setMassOrderID] = useState("3")
   const [orders, setOrders] = useState<Order[]>([])
   const [tikTokData, setTikTokData] = useState<TikTokData[]>([])
   const [loading, setLoading] = useState(false)
@@ -54,6 +54,30 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
   // Sorting states
   const [sortColumn, setSortColumn] = useState<string | null>(null)
   const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(null)
+
+  const [partialLoadingId, setPartialLoadingId] = useState<number | null>(null)
+  const [partialDone, setPartialDone] = useState<Record<number, boolean>>({})
+
+  const PARTIAL_API = "https://youtuberefill-1.onrender.com/api/tiktok/partial"
+
+  async function handlePartial(orderId: number, remains: number) {
+    if (remains <= 0) return
+    try {
+      setPartialLoadingId(orderId)
+      const res = await axios.post(PARTIAL_API, { orderId, remains })
+      if (res.data?.success) {
+        setPartialDone((m) => ({ ...m, [orderId]: true }))
+      } else {
+        console.error("Partial failed:", res.data)
+        alert("Partial isteği başarısız oldu.")
+      }
+    } catch (e: any) {
+      console.error("Partial API error:", e?.response?.data || e?.message)
+      alert("Partial API hatası: " + (e?.response?.data?.error || e?.message))
+    } finally {
+      setPartialLoadingId(null)
+    }
+  }
 
   const handleLinkClick = (link: string) => {
     const url = link.startsWith("http") ? link : `https://www.tiktok.com/@${link}`
@@ -79,20 +103,20 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
       missing: number
       external_id: number
       currentCount: number
-      quantity:number
-      status:number
+      quantity: number
+      status: number
     }[] = []
     const aboveTargetIds: number[] = []
- const bellowStartCountIds: number[] = []
+    const bellowStartCountIds: number[] = []
     orders.forEach((order) => {
       const username = order.link
       const tikTokInfo = tikTokData.find((t) => t.url === username)
       if (!tikTokInfo || tikTokInfo.count === null) return
-      
+
 
       const targetCount = order.quantity + order.start_count
       const currentCount = tikTokInfo.count
-       if (currentCount < order.start_count) {
+      if (currentCount < order.start_count) {
         bellowStartCountIds.push(order.id)
       }
       const status = tikTokInfo.status
@@ -104,8 +128,8 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
           link: order.link,
           missing,
           external_id: order.external_id,
-          quantity:order.quantity,
-          status:status
+          quantity: order.quantity,
+          status: status
         })
       } else {
         aboveTargetIds.push(order.id)
@@ -116,7 +140,7 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
       Number(
         belowTargetData.filter((item) => item.currentCount !== -1).reduce((total, item) => total + item.missing, 0),
       ) * 0.00045
-   // Başlangıç sayısının altında olanlar (Bu senin yeni eklediğin)
+    // Başlangıç sayısının altında olanlar (Bu senin yeni eklediğin)
     const bellowStartCountIdsStr = bellowStartCountIds.join(",") || "x"
     const aboveContent = aboveTargetIds.join(",") || "x"
     const notFound =
@@ -126,12 +150,13 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
         .join(",") || "x"
     const idsLine =
       belowTargetData
-        .filter((item) => item.currentCount !== -1  && item.status !== 400 && item.missing / (item.quantity / 100) < 100   )
+
+        .filter((item) => item.currentCount !== -1 && item.missing > 100 && item.status !== 400 && item.missing / (item.quantity / 100) < 100)
         .map((d) => d.id)
         .join(",") || "x"
     const refillExternal =
       belowTargetData
-       .filter((item) => item.currentCount !== -1  && item.status !== 400 && item.missing / (item.quantity / 100) < 100   )
+        .filter((item) => item.currentCount !== -1 && item.status !== 400 && item.missing / (item.quantity / 100) < 100)
         .map((d) => d.external_id)
         .join(",") || "x"
     const refillLines =
@@ -141,12 +166,12 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
         .join("\n") || "x"
     const detailLines =
       belowTargetData
-         .filter((item) => item.currentCount !== -1 &&  item.status !== 400 && item.missing / (item.quantity / 100) < 100   )
+        .filter((item) => item.currentCount !== -1 && item.status !== 400 && item.missing / (item.quantity / 100) < 100)
         .map((d) => `${massorderID} | ${d.link} | ${d.missing}`)
         .join("\n") || "x"
-        const detailLines8csn =
+    const detailLines8csn =
       belowTargetData
-         .filter((item) => item.currentCount !== -1 &&  item.status !== 400 && item.missing / (item.quantity / 100) < 100   )
+        .filter((item) => item.currentCount !== -1 && item.status !== 400 && item.missing / (item.quantity / 100) < 100)
         .map((d) => `${d.missing}——${d.link}`)
         .join("\n") || "x"
 
@@ -359,7 +384,7 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
       icon: "📦",
     },
     { id: "not-found", label: "Not Found", content: resultsData?.notFoundIds, color: "text-red-400", icon: "❌" },
-     { id: "bellow-start-count", label: "bellow start count", content: resultsData?.bellowStartCountIds, color: "text-green-400", icon: "❌" },
+    { id: "bellow-start-count", label: "bellow start count", content: resultsData?.bellowStartCountIds, color: "text-green-400", icon: "❌" },
     { id: "success", label: "Success", content: resultsData?.successMainIds, color: "text-green-400", icon: "✅" },
   ]
 
@@ -470,19 +495,19 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
                           {renderSortIcon("dropRate")}
                         </button>
                       </th>
+                      <th className="text-left py-4 px-4 text-slate-300 font-semibold">Partial</th>
                     </tr>
                   </thead>
                   <tbody>
                     {currentPaginatedOrders.map((order) => (
                       <tr
                         key={order.id}
-                        className={`border-b border-slate-700 transition-colors duration-200 ${
-                          order.isBelowTarget
-                            ? order.dropRate >= 100
-                              ? "bg-amber-900/20 hover:bg-amber-800/30"
-                              : "bg-red-900/20 hover:bg-red-800/30"
-                            : "hover:bg-slate-700/50"
-                        }`}
+                        className={`border-b border-slate-700 transition-colors duration-200 ${order.isBelowTarget
+                          ? order.dropRate >= 100
+                            ? "bg-amber-900/20 hover:bg-amber-800/30"
+                            : "bg-red-900/20 hover:bg-red-800/30"
+                          : "hover:bg-slate-700/50"
+                          }`}
                       >
                         <td className="py-4 px-4">
                           <span className="bg-blue-600 text-white text-sm font-medium px-3 py-1 rounded-full">
@@ -550,11 +575,10 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
                                     </span>
                                   )}
                                 <span
-                                  className={`font-semibold text-sm px-3 py-1 rounded-full border ${
-                                    order.dropRate >= 100
-                                      ? "text-amber-500 border-amber-500"
-                                      : "text-red-500 border-red-500"
-                                  }`}
+                                  className={`font-semibold text-sm px-3 py-1 rounded-full border ${order.dropRate >= 100
+                                    ? "text-amber-500 border-amber-500"
+                                    : "text-red-500 border-red-500"
+                                    }`}
                                 >
                                   {order.tikTokInfo.count === -1
                                     ? "Not Found"
@@ -581,6 +605,28 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
                             </div>
                           )}
                         </td>
+                        <td className="py-4 px-4">
+                          {order.isBelowTarget && order.dropRate < 100 ? (
+                            <button
+                              onClick={() => handlePartial(order.id, order.difference)}
+                              disabled={partialLoadingId === order.id || partialDone[order.id] || order.difference <= 0}
+                              className={`text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors
+                                ${partialDone[order.id]
+                                  ? "bg-emerald-700 text-white cursor-default"
+                                  : partialLoadingId === order.id
+                                    ? "bg-slate-600 text-white cursor-wait"
+                                    : "bg-amber-600 hover:bg-amber-700 text-white"}`}
+                            >
+                              {partialDone[order.id]
+                                ? "Sent ✓"
+                                : partialLoadingId === order.id
+                                  ? "Sending..."
+                                  : `Partial (${order.difference})`}
+                            </button>
+                          ) : (
+                            <span className="text-gray-500 text-sm">—</span>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -591,13 +637,12 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
                 {currentPaginatedOrders.map((order) => (
                   <div
                     key={order.id}
-                    className={`border border-slate-600 rounded-lg p-4 ${
-                      order.isBelowTarget
-                        ? order.dropRate >= 100
-                          ? "bg-amber-900/20 border-amber-600/30"
-                          : "bg-red-900/20 border-red-600/30"
-                        : "bg-slate-900/50"
-                    }`}
+                    className={`border border-slate-600 rounded-lg p-4 ${order.isBelowTarget
+                      ? order.dropRate >= 100
+                        ? "bg-amber-900/20 border-amber-600/30"
+                        : "bg-red-900/20 border-red-600/30"
+                      : "bg-slate-900/50"
+                      }`}
                   >
                     <div className="flex items-center justify-between mb-3">
                       <span className="bg-blue-600 text-white text-sm font-medium px-3 py-1 rounded-full">
@@ -634,7 +679,7 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
                                     ? "Not Found"
                                     : order.tikTokInfo.status === 400
                                       ? "Account Not Found"
-                                      : order.tikTokInfo.count}
+                                      : order.tikTokInfo.status === 404 ? "Account Not Found" : order.tikTokInfo.count}
                                 </span>
                                 {order.tikTokInfo.count !== 0 &&
                                   order.tikTokInfo.status !== 400 &&
@@ -660,11 +705,31 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
                         <div>
                           {order.tikTokInfo ? (
                             order.isBelowTarget ? (
-                              <span
-                                className={`font-semibold ${order.dropRate >= 100 ? "text-amber-400" : "text-red-400"}`}
-                              >
-                                {order.dropRate.toFixed(1)}% Drop
-                              </span>
+                              <div className="flex flex-col items-end gap-2">
+                                <span
+                                  className={`font-semibold ${order.dropRate >= 100 ? "text-amber-400" : "text-red-400"}`}
+                                >
+                                  {order.dropRate.toFixed(1)}% Drop
+                                </span>
+                                {order.dropRate < 100 && (
+                                  <button
+                                    onClick={() => handlePartial(order.id, order.difference)}
+                                    disabled={partialLoadingId === order.id || partialDone[order.id] || order.difference <= 0}
+                                    className={`text-xs font-semibold px-2 py-1 rounded-lg transition-colors
+                                      ${partialDone[order.id]
+                                        ? "bg-emerald-700 text-white cursor-default"
+                                        : partialLoadingId === order.id
+                                          ? "bg-slate-600 text-white cursor-wait"
+                                          : "bg-amber-600 hover:bg-amber-700 text-white"}`}
+                                  >
+                                    {partialDone[order.id]
+                                      ? "Sent ✓"
+                                      : partialLoadingId === order.id
+                                        ? "Sending..."
+                                        : `Partial (${order.difference})`}
+                                  </button>
+                                )}
+                              </div>
                             ) : order.tikTokInfo?.count === -1 ? (
                               <span className="text-red-400 font-semibold flex items-center gap-1">
                                 <XCircle className="w-4 h-4" />
@@ -702,9 +767,8 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
                     <button
                       key={page}
                       onClick={() => handlePageChange(page)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                        currentPage === page ? "bg-blue-600 text-white" : "bg-slate-700 hover:bg-slate-600 text-white"
-                      }`}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium ${currentPage === page ? "bg-blue-600 text-white" : "bg-slate-700 hover:bg-slate-600 text-white"
+                        }`}
                     >
                       {page}
                     </button>
@@ -723,141 +787,142 @@ export function TikTokAnalyticsTab({ serviceType, endpoint, label }: TikTokAnaly
         </div>
       </div>
       {/* Improved Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
-          {/* Modal Content */}
-          <div className="relative bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-slate-700 bg-slate-800/50">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
-                  <BarChart3 className="w-5 h-5 text-white" />
+      {
+        isModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
+            {/* Modal Content */}
+            <div className="relative bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-6 border-b border-slate-700 bg-slate-800/50">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+                    <BarChart3 className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-white">{label} Analysis Results</h2>
+                    <p className="text-slate-400 text-sm">Export and review your data</p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-xl font-semibold text-white">{label} Analysis Results</h2>
-                  <p className="text-slate-400 text-sm">Export and review your data</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-white transition-colors p-2 hover:bg-slate-700 rounded-lg"
-              >
-                <XCircle className="w-5 h-5" />
-              </button>
-            </div>
-            {/* Modal Body */}
-            <div className="flex flex-col h-full max-h-[calc(90vh-88px)]">
-              {/* Mobile Tab Navigation */}
-              <div className="md:hidden border-b border-slate-700 bg-slate-800/50">
-                <select
-                  value={activeTab}
-                  onChange={(e) => setActiveTab(e.target.value)}
-                  className="w-full p-3 bg-slate-800 text-white border-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="text-slate-400 hover:text-white transition-colors p-2 hover:bg-slate-700 rounded-lg"
                 >
-                  {tabs.map((tab) => (
-                    <option key={tab.id} value={tab.id}>
-                      {tab.icon} {tab.label}
-                    </option>
-                  ))}
-                </select>
+                  <XCircle className="w-5 h-5" />
+                </button>
               </div>
-              {/* Desktop Tab Navigation */}
-              <div className="hidden md:flex border-b border-slate-700 bg-slate-800/50 overflow-x-auto">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2 ${
-                      activeTab === tab.id
+              {/* Modal Body */}
+              <div className="flex flex-col h-full max-h-[calc(90vh-88px)]">
+                {/* Mobile Tab Navigation */}
+                <div className="md:hidden border-b border-slate-700 bg-slate-800/50">
+                  <select
+                    value={activeTab}
+                    onChange={(e) => setActiveTab(e.target.value)}
+                    className="w-full p-3 bg-slate-800 text-white border-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {tabs.map((tab) => (
+                      <option key={tab.id} value={tab.id}>
+                        {tab.icon} {tab.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {/* Desktop Tab Navigation */}
+                <div className="hidden md:flex border-b border-slate-700 bg-slate-800/50 overflow-x-auto">
+                  {tabs.map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2 ${activeTab === tab.id
                         ? "text-blue-400 border-b-2 border-blue-400 bg-slate-700/50"
                         : "text-slate-300 hover:text-white hover:bg-slate-700/50"
-                    }`}
-                  >
-                    <span>{tab.icon}</span>
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-              {/* Tab Content */}
-              <div className="flex-1 overflow-y-auto p-6">
-                {tabs.map((tab) => (
-                  <div key={tab.id} className={activeTab === tab.id ? "block" : "hidden"}>
-                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl">
-                      <div className="p-4 border-b border-slate-700 flex items-center justify-between">
-                        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                          <span>{tab.icon}</span>
-                          {tab.label}
-                          {tab.id === "mass-order" && resultsData && (
-                            <span className="text-sm text-slate-400 bg-slate-700 px-2 py-1 rounded-full">
-                              ${resultsData.missingTotal.toFixed(5)}
-                            </span>
-                          )}
-                        </h3>
-                        {tab.id === "mass-order" ? (
-            <div className="flex-1 max-w-xs mx-4">
-              <div className="relative">
-                <input
-                  id="massorder"
-                  onChange={(e) => setMassOrderID(e.target.value)}
-                  value={massorderID}
-                  type="text"
-                  placeholder="Mass order id"
-                  className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-gray-900 text-white placeholder-gray-400 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  autoComplete="off"
-                  aria-label="Mass order id"
-                />
-                {/* Clear button */}
-                {massorderID ? (
-                  <button
-                    onClick={() => setMassOrderID("")}
-                    className="absolute right-1 top-1/2 -translate-y-1/2 px-2 py-1 rounded hover:bg-gray-800"
-                    aria-label="Clear mass order id"
-                    title="Temizle"
-                    type="button"
-                  >
-                    ✕
-                  </button>
-                ) : null}
-              </div>
-            </div>
-          ) : (
-            // keep spacing consistent when input absent
-            <div className="mx-4 flex-1 max-w-xs" />
-          )}
-                        <button
-                          onClick={() => handleCopyToClipboard(tab.content || "", tab.id)}
-                          className="flex items-center gap-2 px-3 py-2 text-sm bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
-                        >
-                          {copiedTab === tab.id ? (
-                            <>
-                              <Check className="w-4 h-4" />
-                              Copied!
-                            </>
+                        }`}
+                    >
+                      <span>{tab.icon}</span>
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+                {/* Tab Content */}
+                <div className="flex-1 overflow-y-auto p-6">
+                  {tabs.map((tab) => (
+                    <div key={tab.id} className={activeTab === tab.id ? "block" : "hidden"}>
+                      <div className="bg-slate-800/50 border border-slate-700 rounded-xl">
+                        <div className="p-4 border-b border-slate-700 flex items-center justify-between">
+                          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                            <span>{tab.icon}</span>
+                            {tab.label}
+                            {tab.id === "mass-order" && resultsData && (
+                              <span className="text-sm text-slate-400 bg-slate-700 px-2 py-1 rounded-full">
+                                ${resultsData.missingTotal.toFixed(5)}
+                              </span>
+                            )}
+                          </h3>
+                          {tab.id === "mass-order" ? (
+                            <div className="flex-1 max-w-xs mx-4">
+                              <div className="relative">
+                                <input
+                                  id="massorder"
+                                  onChange={(e) => setMassOrderID(e.target.value)}
+                                  value={massorderID}
+                                  type="text"
+                                  placeholder="Mass order id"
+                                  className="w-full px-3 py-2 rounded-lg border border-gray-600 bg-gray-900 text-white placeholder-gray-400 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                  autoComplete="off"
+                                  aria-label="Mass order id"
+                                />
+                                {/* Clear button */}
+                                {massorderID ? (
+                                  <button
+                                    onClick={() => setMassOrderID("")}
+                                    className="absolute right-1 top-1/2 -translate-y-1/2 px-2 py-1 rounded hover:bg-gray-800"
+                                    aria-label="Clear mass order id"
+                                    title="Temizle"
+                                    type="button"
+                                  >
+                                    ✕
+                                  </button>
+                                ) : null}
+                              </div>
+                            </div>
                           ) : (
-                            <>
-                              <Copy className="w-4 h-4" />
-                              Copy
-                            </>
+                            // keep spacing consistent when input absent
+                            <div className="mx-4 flex-1 max-w-xs" />
                           )}
-                        </button>
-                      </div>
-                      <div className="p-4">
-                        <div className="bg-slate-900 p-4 rounded-lg border border-slate-700">
-                          <pre className={`${tab.color} text-sm whitespace-pre-wrap font-mono leading-relaxed`}>
-                            {tab.content || "No data available"}
-                          </pre>
+                          <button
+                            onClick={() => handleCopyToClipboard(tab.content || "", tab.id)}
+                            className="flex items-center gap-2 px-3 py-2 text-sm bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+                          >
+                            {copiedTab === tab.id ? (
+                              <>
+                                <Check className="w-4 h-4" />
+                                Copied!
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-4 h-4" />
+                                Copy
+                              </>
+                            )}
+                          </button>
+                        </div>
+                        <div className="p-4">
+                          <div className="bg-slate-900 p-4 rounded-lg border border-slate-700">
+                            <pre className={`${tab.color} text-sm whitespace-pre-wrap font-mono leading-relaxed`}>
+                              {tab.content || "No data available"}
+                            </pre>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   )
 }
