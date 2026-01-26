@@ -83,4 +83,32 @@ router.get('/ticket', async (req, res) => {
   }
 });
 
+
+router.post('/tickets/add', async (req, res) => {
+  const { username, subject, message, staff_name } = req.body;
+  const apiKey = req.headers['x-api-key'] || process.env.API_KEY_1;
+
+  try {
+    const response = await axios.post(
+      `${process.env.PLATFORM1}/tickets/add`,
+      {
+        username,
+        subject,
+        message,
+        ...(staff_name && { staff_name })
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Api-Key': apiKey,
+        },
+      }
+    );
+    res.json(response.data);
+  } catch (error) {
+    console.error('Ticket eklenirken hata:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({ error_message: error.response?.data?.error_message || error.message });
+  }
+});
+
 export default router;
