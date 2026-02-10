@@ -8,28 +8,18 @@ const router = express.Router();
 
 const profit = []
 
-// ——— Ayarlar (opsiyonel env) ———
-const LOG_DEBUG = process.env.LOG_DISABLED_DEBUG === '1' || true; // detaylı log açık
-const MATCH_MODE = (process.env.DISABLED_MATCH_MODE || 'exact').toLowerCase(); // 'exact' | 'numeric'
+const LOG_DEBUG = process.env.LOG_DISABLED_DEBUG === '1' || true;
+const MATCH_MODE = (process.env.DISABLED_MATCH_MODE || 'exact').toLowerCase();
 
-// ——— Yardımcılar ———
 const stripBOM = (s) => (s && s.charCodeAt(0) === 0xFEFF ? s.slice(1) : s);
 
-/** ID normalizasyonu:
- * - BOM ve görünmez boşluklar temizlenir
- * - baş/son boşluklar kırpılır
- * - iç boşluklar kaldırılır
- * - baştaki 0'lar atılır (numeric mode’da)
- */
 const normalizeId = (val, mode = MATCH_MODE) => {
   if (val == null) return '';
   let s = String(val);
-  s = stripBOM(s).trim().replace(/\s+/g, ''); // tüm boşlukları temizle
-  // sadece rakam bırak (bazı kaynaklar ID yanında #/virgül/emoji vs getirebiliyor)
+  s = stripBOM(s).trim().replace(/\s+/g, ''); 
   s = s.replace(/[^\d]/g, '');
   if (!s) return '';
   if (mode === 'numeric') {
-    // baştaki sıfırları at → "0005361" -> "5361"
     s = String(Number(s));
   }
   return s;
