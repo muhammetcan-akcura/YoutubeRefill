@@ -311,7 +311,7 @@ const onlyrefill :any= [];
     onlyrefill.push(item.mainID); 
   }
 
-  if (missingAmount >= 50 && missingPercent > 10 ) {
+  if (missingAmount >= 50) {
     missingOver90.push(item.mainID); 
   }
 
