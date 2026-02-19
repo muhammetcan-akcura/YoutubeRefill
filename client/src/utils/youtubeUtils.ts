@@ -5,6 +5,8 @@ import { ApiOrder, Order } from "../types";
 // ─── 1) API Key Rotator ────────────────────────────────────────────────────────
 
 const apiKeys = [
+  'AIzaSyCzzJKGnpBQ4nVzRdM83KC8N9UcAtgqiRc',
+  'AIzaSyAkKOb8nMOa9RZ23-WebAL35-KhBmDGQm8',
   'AIzaSyBnTARZ41aP_m8mAuKPSjIBQPyOjWNJ8WU',
   'AIzaSyCGha7oph_qrLmiAM9oMEpfnZq1KSZkx8A',
   'AIzaSyC5c78i_vF6WOVPuo23szwKwsoJ_dNPNmc',
