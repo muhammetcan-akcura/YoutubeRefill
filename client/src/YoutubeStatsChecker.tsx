@@ -135,7 +135,7 @@ const YoutubeStatsChecker: React.FC = () => {
         mainLink: apiOrder.link
 
       }));
-    //  console.log(orders[0].startCount)
+      //  console.log(orders[0].startCount)
 
       if (orders.length === 0) {
         addLog('No valid orders found.');
@@ -147,7 +147,7 @@ const YoutubeStatsChecker: React.FC = () => {
 
       // Collect items that need refill
       const refillNeeded: RefillItem[] = [];
-      const refillNotNeed :any = []
+      const refillNotNeed: any = []
 
 
 
@@ -178,12 +178,12 @@ const YoutubeStatsChecker: React.FC = () => {
               const accessResult = await checkVideoAccessibility(order.link, addLog);
               if (accessResult.accessible) {
                 addLog(`✅ Success! Video is accessible`);
-                 refillNotNeed.push({
+                refillNotNeed.push({
                   id: order.id,
                   mainID: order.mainID,
                   count: order.count,
                   currentCount: 0,
-               
+
                   link: order.link,
                   mainLink: order.mainLink,
                   startCount: order.startCount
@@ -198,7 +198,7 @@ const YoutubeStatsChecker: React.FC = () => {
                   mainID: order.mainID,
                   count: order.count,
                   currentCount: 0,
-                 
+
                   link: order.link,
                   mainLink: order.mainLink,
                   startCount: order.startCount
@@ -209,7 +209,15 @@ const YoutubeStatsChecker: React.FC = () => {
 
           if (currentCount === null) {
             const itemType = activeTab === 'subscribers' ? 'Channel' : 'Video';
-            addLog(`⚠️ ${itemType} not found, skipping! ID: ${order.id}`);
+            addLog(`⚠️ ${itemType} not found or unavailable, adding to refill list! ID: ${order.id}`);
+            refillNeeded.push({
+              id: order.id,
+              mainID: order.mainID,
+              count: order.count,
+              startCount: order.startCount,
+              link: order.link,
+              currentCount: 0 // Treating "not found" as 0 current count to trigger full refill/attention
+            });
             continue;
           }
 
@@ -220,15 +228,15 @@ const YoutubeStatsChecker: React.FC = () => {
 
           if (currentCount >= expectedTotal) {
             addLog(`✅ Success! ID: ${order.id}`);
-             refillNotNeed.push({
+            refillNotNeed.push({
               id: order.id,
               mainID: order.mainID,
               count: order.count,
               startCount: order.startCount,
-              link:order.link,
+              link: order.link,
               currentCount
             });
-            
+
           } else {
             addLog(`❌ Failed! ID: ${order.id}`);
             refillNeeded.push({
@@ -236,7 +244,7 @@ const YoutubeStatsChecker: React.FC = () => {
               mainID: order.mainID,
               count: order.count,
               startCount: order.startCount,
-              link:order.link,
+              link: order.link,
               currentCount
             });
           }
@@ -274,10 +282,10 @@ const YoutubeStatsChecker: React.FC = () => {
           const detailedList = refillNeeded.map(item => {
             return `${item.mainID},`
           })
-          const successOrderId = refillNotNeed.map((item:any) => {
+          const successOrderId = refillNotNeed.map((item: any) => {
             return `${item.mainID},`
           })
-          console.log(successOrderId,"successOrderId")
+          console.log(successOrderId, "successOrderId")
 
           const finalContent = `\nReports Detail (${formattedDate}):\n${detailedList}`;
 
@@ -285,51 +293,52 @@ const YoutubeStatsChecker: React.FC = () => {
           addLog(`\n${refillNeeded.length} inaccessible videos detected and report prepared.`);
         } else {
 
-console.log(refillNeeded.map((item: any) => {
-    return {
-        link: item.link,
-        quantity: (item.count + item.startCount) - item.currentCount
-    }}))
-    const successOrderId = refillNotNeed.map((item:any) => {
+          console.log(refillNeeded.map((item: any) => {
+            return {
+              link: item.link,
+              quantity: (item.count + item.startCount) - item.currentCount
+            }
+          }))
+          const successOrderId = refillNotNeed.map((item: any) => {
             return `${item.mainID}`
           })
-          console.log(successOrderId.join(","),"successOrderId")
-const missingOver90 :any= [];
-const onlyrefill :any= [];
+          console.log(successOrderId.join(","), "successOrderId")
+          const missingOver90: any = [];
+          const onlyrefill: any = [];
           const refillLines = refillNeeded
             //  .map(item => `${item.id} refill(${item.currentCount}) | missing amount: ${Number(item.startCount)+Number(item.count) - Number(item.currentCount)} | %${((100 / Number(item.count)) * (Number(item.startCount)+Number(item.count) - Number(item.currentCount))).toFixed(0)  }`)
             .map(item => {
-  const totalNeeded = Number(item.count) + Number(item.startCount);
-  const current = Number(item.currentCount);
-  const missingAmount = totalNeeded - current;
-  const missingPercent = missingAmount / (Number(item.count) / 100) 
-  if (current < Number(item.startCount)) {
-    return `${item.mainID}: bellow start count ${item.currentCount} - ${item.startCount}`;
-  }
+              const totalNeeded = Number(item.count) + Number(item.startCount);
+              const current = Number(item.currentCount);
+              const missingAmount = totalNeeded - current;
+              const missingPercent = missingAmount / (Number(item.count) / 100)
+              if (current < Number(item.startCount)) {
+                return `${item.mainID}: bellow start count ${item.currentCount} - ${item.startCount}`;
+              }
 
-   if (current >= Number(item.startCount)) {
-    onlyrefill.push(item.mainID); 
-  }
+              if (current >= Number(item.startCount)) {
+                onlyrefill.push(item.mainID);
+              }
 
-  if (missingAmount >= 50) {
-    missingOver90.push(item.mainID); 
-  }
+              if (missingAmount >= 50) {
+                missingOver90.push(item.mainID);
+              }
 
-  return `${item.id} refill(${current}) | misssing amount: ${missingAmount} | %${missingPercent.toFixed(0)}`;
-}).join('\n');
+              return `${item.id} refill(${current}) | misssing amount: ${missingAmount} | %${missingPercent.toFixed(0)}`;
+            }).join('\n');
 
 
-console.log('IDs with over 50+%%%+> missing:', missingOver90.join(","));
-let totalQuantity = 0;
+          console.log('IDs with over 50+%%%+> missing:', missingOver90.join(","));
+          let totalQuantity = 0;
 
-const massorder = ""
-// refillNeeded.map((item: any) => {
-//   const quantity = (item.count + item.startCount) - item.currentCount;
-//   totalQuantity += quantity;
-//   return `1 | ${item.link} | ${quantity}`;
-// }).join("\n");
+          const massorder = ""
+          // refillNeeded.map((item: any) => {
+          //   const quantity = (item.count + item.startCount) - item.currentCount;
+          //   totalQuantity += quantity;
+          //   return `1 | ${item.link} | ${quantity}`;
+          // }).join("\n");
 
-console.log("Toplam Quantity:", totalQuantity);
+          console.log("Toplam Quantity:", totalQuantity);
           const idList = refillNeeded.map(item => item.mainID).join(',');
           const finalContent = `${refillLines}\n\n${idList}\n\n\n ${massorder}`;
           setRefillContent(finalContent);

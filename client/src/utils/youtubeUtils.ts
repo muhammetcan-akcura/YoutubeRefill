@@ -226,14 +226,37 @@ export const getViewsCount = async (
     addLog(`Invalid YouTube URL: ${url}`);
     return null;
   }
-  const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${videoId}`;
+  const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=statistics,status&id=${videoId}`;
   const res = await fetchWithKeyRotation(apiUrl, addLog);
   const data = await res.json();
   if (!data.items?.length) {
     addLog(`Video not found: ${videoId}`);
     return null;
   }
-  return parseInt(data.items[0].statistics.viewCount, 10);
+
+  const item = data.items[0];
+
+  // Video yayında değil veya gizli ise
+  if (item.status?.privacyStatus === 'private') {
+    addLog(`Video is private: ${videoId}`);
+    return null;
+  }
+  if (item.status?.uploadStatus && item.status.uploadStatus !== 'processed') {
+    addLog(`Video is unavailable (uploadStatus: ${item.status.uploadStatus}): ${videoId}`);
+    return null;
+  }
+
+  // oEmbed kontrolü (API'nin bazen istatistik döndürdüğü ama videonun silindiği/telif yediği durumlar için)
+  const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
+  try {
+    const oRes = await fetch(oembedUrl);
+    if (oRes.status === 404) {
+      addLog(`Video is unavailable or not found (oEmbed 404): ${videoId}`);
+      return null;
+    }
+  } catch (e) { }
+
+  return parseInt(item.statistics.viewCount, 10);
 };
 
 export const getLikesCount = async (
@@ -245,14 +268,37 @@ export const getLikesCount = async (
     addLog(`Invalid YouTube URL: ${url}`);
     return null;
   }
-  const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${videoId}`;
+  const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=statistics,status&id=${videoId}`;
   const res = await fetchWithKeyRotation(apiUrl, addLog);
   const data = await res.json();
   if (!data.items?.length) {
     addLog(`Video not found: ${videoId}`);
     return null;
   }
-  return parseInt(data.items[0].statistics.likeCount, 10);
+
+  const item = data.items[0];
+
+  // Video yayında değil veya gizli ise
+  if (item.status?.privacyStatus === 'private') {
+    addLog(`Video is private: ${videoId}`);
+    return null;
+  }
+  if (item.status?.uploadStatus && item.status.uploadStatus !== 'processed') {
+    addLog(`Video is unavailable (uploadStatus: ${item.status.uploadStatus}): ${videoId}`);
+    return null;
+  }
+
+  // oEmbed kontrolü (API'nin bazen istatistik döndürdüğü ama videonun silindiği/telif yediği durumlar için)
+  const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
+  try {
+    const oRes = await fetch(oembedUrl);
+    if (oRes.status === 404) {
+      addLog(`Video is unavailable or not found (oEmbed 404): ${videoId}`);
+      return null;
+    }
+  } catch (e) { }
+
+  return parseInt(item.statistics.likeCount, 10);
 };
 
 export const getSubscriberCount = async (
