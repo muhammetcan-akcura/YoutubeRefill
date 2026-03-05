@@ -175,7 +175,7 @@ const YoutubeStatsChecker: React.FC = () => {
               currentCount = await getSubscriberCount(order.link, addLog);
               break;
             case 'embed':
-              const accessResult = await checkVideoAccessibility(order.link, addLog);
+              const accessResult = await checkVideoAccessibility(order.link, addLog) as any;
               if (accessResult.accessible) {
                 addLog(`✅ Success! Video is accessible`);
                 refillNotNeed.push({
@@ -190,34 +190,31 @@ const YoutubeStatsChecker: React.FC = () => {
                 });
 
               } else {
-                addLog(`❌ Failed! Video not accessible`);
+                addLog(`❌ Failed! Video not accessible: ${accessResult.error || accessResult.errorCode || 'unknown'}`);
 
-                // Add to refill list with error information
-                refillNeeded.push({
-                  id: order.id,
-                  mainID: order.mainID,
-                  count: order.count,
-                  currentCount: 0,
-
-                  link: order.link,
-                  mainLink: order.mainLink,
-                  startCount: order.startCount
-                });
+                // If video is removed or not found, do not add it to the results list
+                if (accessResult.error === 'video_not_found') {
+                  addLog(`⚠️ Video removed/not found, skipping from results! ID: ${order.id}`);
+                } else {
+                  // Add to refill list with error information for other accessibility issues
+                  refillNeeded.push({
+                    id: order.id,
+                    mainID: order.mainID,
+                    count: order.count,
+                    currentCount: 0,
+                    errorReason: accessResult.error || accessResult.errorCode,
+                    link: order.link,
+                    mainLink: order.mainLink,
+                    startCount: order.startCount
+                  });
+                }
               }
               continue; // Skip other operations
           }
 
           if (currentCount === null) {
             const itemType = activeTab === 'subscribers' ? 'Channel' : 'Video';
-            addLog(`⚠️ ${itemType} not found or unavailable, adding to refill list! ID: ${order.id}`);
-            refillNeeded.push({
-              id: order.id,
-              mainID: order.mainID,
-              count: order.count,
-              startCount: order.startCount,
-              link: order.link,
-              currentCount: 0 // Treating "not found" as 0 current count to trigger full refill/attention
-            });
+            addLog(`⚠️ ${itemType} removed or unavailable, skipping from results list! ID: ${order.id}`);
             continue;
           }
 
